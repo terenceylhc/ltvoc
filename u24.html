@@ -332,9 +332,10 @@
 
         function init() {
             const grid = document.getElementById('vocabGrid');
-            const shuffledData = shuffle([...vocabularyData]);
+            // 已移除隨機洗牌邏輯，改為依原始數組順序排列
+            const orderedData = [...vocabularyData];
             
-            shuffledData.forEach(item => {
+            orderedData.forEach(item => {
                 grid.appendChild(createCard(item));
             });
         }
