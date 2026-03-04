@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>統測必考!高頻率單字圖像記憶學習卡</title>
+    <!-- 引入字體：使用圓潤的字體更能襯托蠟筆風格 -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #fffaf0; /* 輕微的米白色背景，像畫紙 */
+            /* 參考蠟筆圖片的色調 */
+            --crayon-pink: #f4c2c2;
+            --crayon-green: #c1e1c1;
+            --crayon-yellow: #fdfd96;
+            --crayon-blue: #aec6cf;
+            
+            --active-text: #5d4037;
+            --disabled-text: #bdbdbd;
+        }
+
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        /* 標題區域 */
+        header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        h1 {
+            color: #d81b60;
+            font-size: 2rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 0px rgba(216, 27, 96, 0.1);
+            position: relative;
+            display: inline-block;
+        }
+
+        h1::after {
+            content: "";
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 100%;
+            height: 8px;
+            background: rgba(216, 27, 96, 0.15);
+            border-radius: 50%;
+        }
+
+        p.subtitle {
+            color: #795548;
+            font-size: 1.1rem;
+        }
+
+        /* 網格容器 */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 20px;
+            max-width: 1000px;
+            width: 100%;
+            position: relative;
+        }
+
+        /* 字卡基礎樣式 (維持截圖中的風格) */
+        .unit-card {
+            aspect-ratio: 1.2 / 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 1.2rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: default;
+            
+            /* 蠟筆不規則邊框感 */
+            border: 3px solid #fff;
+            border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
+            box-shadow: 4px 4px 0px rgba(0,0,0,0.03);
+        }
+
+        /* 已開放單元的樣式 */
+        .unit-card.active {
+            cursor: pointer;
+            color: var(--active-text);
+        }
+
+        .unit-card.active:hover {
+            transform: scale(1.05) rotate(1deg);
+            box-shadow: 6px 6px 0px rgba(0,0,0,0.08);
+        }
+
+        /* 未開放單元的樣式 (維持截圖中的淡淡灰色) */
+        .unit-card.locked {
+            background-color: #f5f5f5 !important;
+            border-color: #eeeeee;
+            color: var(--disabled-text);
+            opacity: 0.8;
+        }
+
+        /* 插圖樣式：替換星星為蠟筆筆觸 */
+        .illustration {
+            width: 150px;
+            height: 100px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            /* 移除 float 動畫 */
+            pointer-events: none;
+            grid-column: span 1;
+            align-self: center;
+        }
+
+        /* 蠟筆筆觸配色 */
+        .card-pink { background-color: var(--crayon-pink); border-color: #f0b0b0; }
+        .card-blue { background-color: var(--crayon-blue); border-color: #9ab6c0; }
+        .card-green { background-color: var(--crayon-green); border-color: #b1d1b1; }
+        .card-yellow { background-color: var(--crayon-yellow); border-color: #ecec85; }
+
+        /* SVG 蠟筆紋理濾鏡 (加強顆粒感) */
+        .crayon-filter {
+            filter: url(#heavy-crayon-texture);
+        }
+
+        @media (max-width: 480px) {
+            .grid-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            h1 { font-size: 1.5rem; }
+            .illustration { width: 120px; height: 80px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 加強版的 SVG 濾鏡：增加 baseFrequency 以獲得更細密的顆粒 -->
+    <svg style="position: absolute; width: 0; height: 0;">
+        <filter id="heavy-crayon-texture">
+            <feTurbulence type="fractalNoise" baseFrequency="1.2" numOctaves="5" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="6" />
+        </filter>
+    </svg>
+
+    <header>
+        <h1>統測必考!高頻率單字</h1>
+        <p class="subtitle">圖像記憶學習卡</p>
+    </header>
+
+    <div class="grid-container" id="unit-grid">
+        <!-- 這裡將由 JS 自動生成 40 個按鈕 -->
+    </div>
+
+    <script>
+        const grid = document.getElementById('unit-grid');
+        const activeUnits = {
+            23: "https://terenceylhc.github.io/ltvoc/u23.html",
+            24: "https://terenceylhc.github.io/ltvoc/u24.html"
+        };
+
+        const colors = ['card-pink', 'card-blue', 'card-green', 'card-yellow'];
+
+        // 生成 40 個單元
+        for (let i = 1; i <= 40; i++) {
+            const card = document.createElement('a');
+            const colorClass = colors[(i - 1) % colors.length];
+            card.className = `unit-card ${colorClass}`;
+            card.innerHTML = `<span>Unit ${i}</span>`;
+
+            if (activeUnits[i]) {
+                card.href = activeUnits[i];
+                card.classList.add('active');
+            } else {
+                card.classList.add('locked');
+            }
+
+            grid.appendChild(card);
+        }
+
+        // 插入具有高顆粒感的蠟筆塗鴉插圖
+        const illu = document.createElement('div');
+        illu.className = 'illustration';
+        illu.innerHTML = `
+            <svg viewBox="0 0 160 80" xmlns="http://www.w3.org/2000/svg" class="crayon-filter">
+                <!-- 模擬參考圖中的破碎筆觸感覺，使用較寬且不規則的 path -->
+                <!-- 第一層：較長的主筆觸 -->
+                <path d="M15 35 L145 32" fill="none" stroke="#f4c2c2" stroke-width="14" stroke-linecap="round" opacity="0.9"/>
+                <!-- 第二層：中間疊加筆觸 -->
+                <path d="M35 45 L125 48" fill="none" stroke="#aec6cf" stroke-width="12" stroke-linecap="round" opacity="0.8"/>
+                <!-- 第三層：底部短筆觸 -->
+                <path d="M55 58 L105 55" fill="none" stroke="#fdfd96" stroke-width="10" stroke-linecap="round" opacity="0.9"/>
+                <!-- 額外增加一些碎點感（由濾鏡放大） -->
+                <circle cx="25" cy="40" r="2" fill="#f4c2c2" opacity="0.6"/>
+                <circle cx="135" cy="35" r="2" fill="#f4c2c2" opacity="0.6"/>
+            </svg>
+        `;
+        grid.appendChild(illu);
+    </script>
+
+</body>
+</html>
