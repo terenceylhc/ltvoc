@@ -1,0 +1,161 @@
+import React, { useState, useEffect } from 'react';
+import { Volume2, Lightbulb, Image as ImageIcon } from 'lucide-react';
+
+// 單字資料庫
+const rawData = [
+  {"id": 1, "word": "lifestyle", "phonetic": "/ˈlaɪfˌstaɪl/", "pos": "n.", "meaning": "生活方式", "strategy": "圖像", "mnemonic": "穿著 Life 夾克的 Style 大師，這就是他的「生活方式」。"},
+  {"id": 2, "word": "worldwide", "phonetic": "/ˌwɜːrldˈwaɪd/", "pos": "adj./adv.", "meaning": "全世界的", "strategy": "字根", "mnemonic": "World 變得很 Wide，因為網通到了「全世界」。"},
+  {"id": 3, "word": "disappointed", "phonetic": "/ˌdɪsəˈpɔɪntɪd/", "pos": "adj.", "meaning": "感到失望的", "strategy": "字根", "mnemonic": "Dis (不) 被 appointed (指派)，讓人「感到失望」。"},
+  {"id": 4, "word": "exact", "phonetic": "/ɪɡˈzækt/", "pos": "adj.", "meaning": "精確的", "strategy": "諧音", "mnemonic": "一個再客 (exact) 氣的人，數據也要非常「精確」。"},
+  {"id": 5, "word": "university", "phonetic": "/ˌjuːnɪˈvɜːrsəti/", "pos": "n.", "meaning": "大學", "strategy": "字根", "mnemonic": "Uni (統一) 宇宙知識的地方就是「大學」。"},
+  {"id": 6, "word": "population", "phonetic": "/ˌpɑːpjuˈleɪʃn/", "pos": "n.", "meaning": "人口", "strategy": "諧音", "mnemonic": "「人口」多到像 Pop (爆米花) 一樣爆出來。"},
+  {"id": 7, "word": "department", "phonetic": "/dɪˈpɑːrtmənt/", "pos": "n.", "meaning": "科系;部門", "strategy": "字根", "mnemonic": "Depart (分開) 出來的區域，就是不同的「部門」。"},
+  {"id": 8, "word": "melt", "phonetic": "/melt/", "pos": "v.", "meaning": "融化", "strategy": "圖像", "mnemonic": "冰淇淋 melt 掉了，變成一灘水。"},
+  {"id": 9, "word": "confuse", "phonetic": "/kənˈfjuːz/", "pos": "v.", "meaning": "使困惑", "strategy": "字根", "mnemonic": "Con (一起) + fuse (熔解) -> 東西全熔在一起，讓人好「困惑」。"},
+  {"id": 10, "word": "eventually", "phonetic": "/ɪˈventʃuəli/", "pos": "adv.", "meaning": "最後;終於", "strategy": "諧音", "mnemonic": "Even (一便) tually (拖哩) -> 「一便拖哩」拖了很久，最後終於完成了！"},
+  {"id": 11, "word": "conversation", "phonetic": "/ˌkɑːnvərˈseɪʃn/", "pos": "n.", "meaning": "對話", "strategy": "字根", "mnemonic": "Con (一起) + vers (轉) -> 兩人轉動思緒在一起進行「對話」。"},
+  {"id": 12, "word": "actually", "phonetic": "/ˈæktʃuəli/", "pos": "adv.", "meaning": "事實上", "strategy": "圖像", "mnemonic": "他在 Act (演戲)，Actually (事實上) 他是一隻披著狼皮的羊！"},
+  {"id": 13, "word": "diving", "phonetic": "/ˈdaɪvɪŋ/", "pos": "n.", "meaning": "潛水", "strategy": "圖像", "mnemonic": "戴上 Dive 鏡，跳進深海去「潛水」。"},
+  {"id": 14, "word": "principle", "phonetic": "/ˈprɪnsəpl/", "pos": "n.", "meaning": "原則;準則", "strategy": "諧音", "mnemonic": "身為一個 Prince (王子)，守信用是基本的「原則」。"},
+  {"id": 15, "word": "primary", "phonetic": "/ˈpraɪmeri/", "pos": "adj.", "meaning": "主要的;初等的", "strategy": "字根", "mnemonic": "Prim (第一) 的東西就是「主要的」。"},
+  {"id": 16, "word": "terrorist", "phonetic": "/ˈterərɪst/", "pos": "n.", "meaning": "恐怖分子", "strategy": "諧音", "mnemonic": "太 Terror (恐怖) 了，這些人是「恐怖分子」。"},
+  {"id": 17, "word": "homemade", "phonetic": "/ˌhoʊmˈmeɪd/", "pos": "adj.", "meaning": "自製的", "strategy": "字根", "mnemonic": "在 Home (家裡) Made (製作) 的，就是「自製的」。"},
+  {"id": 18, "word": "friendship", "phonetic": "/ˈfrendʃɪp/", "pos": "n.", "meaning": "友誼", "strategy": "圖像", "mnemonic": "這是一艘載滿 Friend 的 Ship，象徵「友誼」。"},
+  {"id": 19, "word": "participate", "phonetic": "/pɑːrˈtɪsɪpeɪt/", "pos": "v.", "meaning": "參與", "strategy": "諧音", "mnemonic": "大家都要來參與 (participate) 派對。"},
+  {"id": 20, "word": "charming", "phonetic": "/ˈtʃɑːrmɪŋ/", "pos": "adj.", "meaning": "迷人的", "strategy": "圖像", "mnemonic": "穿上 Charm (飾品) 之後，變得非常「迷人」。"},
+  {"id": 21, "word": "instrument", "phonetic": "/ˈɪnstrəmənt/", "pos": "n.", "meaning": "樂器;儀器", "strategy": "圖像", "mnemonic": "他在裡面彈奏弦 (Stru)，這就是他的「樂器」。"},
+  {"id": 22, "word": "principal", "phonetic": "/ˈprɪnsəpl/", "pos": "n./adj.", "meaning": "校長;主要的", "strategy": "諧音", "mnemonic": "校長是你的 Pal (好朋友) -> 校長 (Princi-pal)。"},
+  {"id": 23, "word": "strict", "phonetic": "/strɪkt/", "pos": "adj.", "meaning": "嚴格的", "strategy": "諧音", "mnemonic": "「死抓著」(strict) 規矩不放的人，非常「嚴格」。"},
+  {"id": 24, "word": "classical", "phonetic": "/ˈklæsɪkl/", "pos": "adj.", "meaning": "古典的", "strategy": "圖像", "mnemonic": "在 Class (教室) 裡聽 Classical (古典樂)。"},
+  {"id": 25, "word": "normal", "phonetic": "/ˈnɔːrml/", "pos": "adj.", "meaning": "正常的", "strategy": "圖像", "mnemonic": "沒有 No 的 Mal (壞)，一切都很「正常」。"},
+  {"id": 26, "word": "attitude", "phonetic": "/ˈætɪtuːd/", "pos": "n.", "meaning": "態度", "strategy": "諧音", "mnemonic": "「愛提督」(attitude) 的人，對長官很有「態度」。"},
+  {"id": 27, "word": "individual", "phonetic": "/ˌɪndɪˈvɪdʒuəl/", "pos": "n./adj.", "meaning": "個人;個別的", "strategy": "字根", "mnemonic": "In (不) + Divide (分開) -> 不能再被分開的單一體，就是「個人」。"},
+  {"id": 28, "word": "instant", "phonetic": "/ˈɪnstənt/", "pos": "adj./n.", "meaning": "立即的", "strategy": "圖像", "mnemonic": "Instant noodles (泡麵) 只要三分鐘，非常「立即」。"},
+  {"id": 29, "word": "ambulance", "phonetic": "/ˈæmbjələns/", "pos": "n.", "meaning": "救護車", "strategy": "諧音", "mnemonic": "「俺不能死」(am-bulance)，快叫「救護車」！"},
+  {"id": 30, "word": "pollute", "phonetic": "/pəˈluːt/", "pos": "v.", "meaning": "汙染", "strategy": "諧音", "mnemonic": "「潑露它」(pollute) 汙染了環境。"}
+];
+
+// 影像資源
+const GRID_IMAGES = [
+  "https://raw.githubusercontent.com/terenceylhc/ltvoc/main/%E9%AB%98%E9%A0%BBU25g1.jpg",
+  "https://raw.githubusercontent.com/terenceylhc/ltvoc/main/%E9%AB%98%E9%A0%BBU25g2.jpg"
+];
+
+const speak = (text) => {
+  const msg = new SpeechSynthesisUtterance();
+  msg.text = text;
+  msg.lang = 'en-US';
+  msg.rate = 0.9;
+  window.speechSynthesis.speak(msg);
+};
+
+const Flashcard = ({ data, index }) => {
+  const [isFlipped, setIsFlipped] = useState(false);
+
+  // 計算 Sprite 位置 (4x4 網格，跳過 index 15)
+  // 單圖網格索引 (0-14)
+  const localIndex = index % 15; 
+  const gridId = Math.floor(index / 15);
+  const row = Math.floor(localIndex / 4);
+  const col = localIndex % 4;
+  
+  const xOffset = col * 33.3333;
+  const yOffset = row * 33.3333;
+
+  const handleFlip = () => {
+    const nextState = !isFlipped;
+    setIsFlipped(nextState);
+    if (nextState) {
+      speak(data.word);
+    }
+  };
+
+  const handleSpeakIcon = (e) => {
+    e.stopPropagation();
+    speak(data.word);
+  };
+
+  return (
+    <div className="perspective-1000 w-full h-80 cursor-pointer" onClick={handleFlip}>
+      <div className={`relative w-full h-full transition-transform duration-700 transform-style-3d ${isFlipped ? 'rotate-y-180' : ''}`}>
+        
+        {/* 正面 */}
+        <div className="absolute w-full h-full backface-hidden bg-white rounded-2xl shadow-xl overflow-hidden border-2 border-slate-100 flex flex-col">
+          <div 
+            className="w-full h-2/3 bg-cover bg-no-repeat"
+            style={{
+              backgroundImage: `url(${GRID_IMAGES[gridId]})`,
+              backgroundPosition: `${xOffset}% ${yOffset}%`,
+              backgroundSize: '400% 400%'
+            }}
+          />
+          <div className="p-4 flex flex-col justify-center items-center h-1/3 bg-white">
+            <div className="flex items-center gap-3">
+              <h2 className="text-3xl font-bold text-slate-800">{data.word}</h2>
+              <button 
+                onClick={handleSpeakIcon}
+                className="p-1.5 rounded-full bg-slate-100 hover:bg-orange-100 text-slate-600 hover:text-orange-600 transition-colors"
+              >
+                <Volume2 size={20} />
+              </button>
+            </div>
+            <p className="text-slate-400 font-serif mt-1">{data.phonetic}</p>
+          </div>
+        </div>
+
+        {/* 反面 */}
+        <div className="absolute w-full h-full backface-hidden bg-[#2C3E50] rounded-2xl shadow-xl p-6 rotate-y-180 flex flex-col text-white">
+          <div className="flex-1 flex flex-col items-center justify-center text-center space-y-2">
+            <h2 className="text-4xl font-extrabold tracking-tight">{data.word}</h2>
+            <span className="px-3 py-1 bg-slate-700/50 rounded-full text-sm text-slate-300 italic">{data.pos}</span>
+            <p className="text-2xl font-medium pt-2 text-orange-50">{data.meaning}</p>
+          </div>
+          
+          <div className="mt-4 space-y-3">
+            <div className="flex items-center gap-2 text-slate-400 text-sm">
+              <Lightbulb size={16} />
+              <span>策略：{data.strategy}記憶</span>
+            </div>
+            <div className="bg-[#E67E22] p-4 rounded-xl shadow-inner border-l-4 border-orange-700">
+              <p className="text-white font-medium text-lg leading-relaxed">
+                {data.mnemonic}
+              </p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
+};
+
+export default function App() {
+  return (
+    <div className="min-h-screen bg-slate-50 py-10 px-4 sm:px-8">
+      <header className="max-w-4xl mx-auto mb-12 text-center">
+        <h1 className="text-4xl font-black text-[#2C3E50] mb-3 flex items-center justify-center gap-3">
+          🧠 互動單字記憶卡
+        </h1>
+        <p className="text-slate-500 font-medium">高頻單字學習單元 - 共 30 個單字</p>
+        <div className="mt-4 h-1 w-24 bg-[#E67E22] mx-auto rounded-full" />
+      </header>
+
+      <main className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
+        {rawData.map((item, index) => (
+          <Flashcard key={item.id} data={item} index={index} />
+        ))}
+      </main>
+
+      <footer className="mt-20 text-center text-slate-400 text-sm border-t border-slate-200 pt-8 pb-10">
+        <p>© 2024 單字 Gem 3 影像與網頁工程師 | 記憶與科技的完美對齊</p>
+      </footer>
+
+      <style dangerouslySetInnerHTML={{ __html: `
+        .perspective-1000 { perspective: 1000px; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+      `}} />
+    </div>
+  );
+}
