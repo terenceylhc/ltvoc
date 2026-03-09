@@ -12,6 +12,7 @@
             --bg-color: #F4F7F6;
             --card-front: #FFFFFF;
             --card-back: #FDFEFE;
+            --border-style: 2px solid #222; /* 統一黑框樣式 */
         }
 
         body {
@@ -58,7 +59,7 @@
 
         .card {
             background-color: transparent;
-            height: 420px;
+            height: 440px; /* 稍微增加高度容納邊框 */
             perspective: 1000px;
             cursor: pointer;
         }
@@ -70,7 +71,7 @@
             text-align: center;
             transition: transform 0.6s;
             transform-style: preserve-3d;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             border-radius: 15px;
         }
 
@@ -88,6 +89,8 @@
             overflow: hidden;
             display: flex;
             flex-direction: column;
+            box-sizing: border-box; /* 重要：確保邊框計算在寬度內 */
+            border: var(--border-style); /* 加入黑框 */
         }
 
         .card-front {
@@ -98,9 +101,7 @@
             background-color: var(--card-back);
             transform: rotateY(180deg);
             padding: 20px;
-            box-sizing: border-box;
             justify-content: center;
-            border: 3px solid var(--primary-color);
         }
 
         /* Image Sprite Section */
@@ -110,6 +111,7 @@
             background-repeat: no-repeat;
             background-size: 400% 400%; /* 4x4 Grid */
             background-color: #eee;
+            border-bottom: var(--border-style); /* 圖片與文字間也加上黑線區隔 */
         }
 
         .front-info {
@@ -118,7 +120,7 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            padding: 10px;
+            padding: 15px;
         }
 
         .word-row {
@@ -188,6 +190,7 @@
             border-radius: 20px;
             display: inline-block;
             margin-bottom: 15px;
+            border: 1px solid #ccc;
         }
 
         .back-mnemonic {
@@ -199,6 +202,7 @@
             border-radius: 10px;
             font-weight: bold;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border: 1px solid #d35400;
         }
 
         footer {
@@ -220,7 +224,7 @@
 </div>
 
 <footer>
-    &copy; 2024 單字記憶工程師 - 視覺記憶優化版
+    &copy; 2024 單字記憶工程師 - 視覺記憶優化版 (已加強黑框設計)
 </footer>
 
 <script>
@@ -267,15 +271,13 @@
         msg.text = text;
         msg.lang = 'en-US';
         msg.rate = 0.9;
-        window.speechSynthesis.cancel(); // Stop current speech
+        window.speechSynthesis.cancel(); 
         window.speechSynthesis.speak(msg);
     }
 
     function createCard(item) {
         const col = item.posIndex % 4;
         const row = Math.floor(item.posIndex / 4);
-        
-        // Calculate background position percentages for 4x4
         const posX = col * 33.3333;
         const posY = row * 33.3333;
         const imageUrl = item.grid === 1 ? grid1Url : grid2Url;
@@ -315,7 +317,6 @@
         return card;
     }
 
-    // Initialize Page
     vocabData.forEach(item => {
         container.appendChild(createCard(item));
     });
