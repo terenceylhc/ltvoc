@@ -20,10 +20,10 @@
             scroll-behavior: smooth;
         }
 
-        /* 3D Flip Card Styles */
+        /* 3D Flip Card Styles - Reduced Aspect Ratio to decrease height */
         .card-container {
             perspective: 1000px;
-            aspect-ratio: 4 / 5;
+            aspect-ratio: 1 / 1.15; /* Adjusted from 4/5 to be more compact */
         }
 
         .card-inner {
@@ -45,51 +45,60 @@
             height: 100%;
             -webkit-backface-visibility: hidden;
             backface-visibility: hidden;
-            border-radius: 1rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            border-radius: 1.25rem;
+            box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.15);
             overflow: hidden;
             background: white;
-            border: 2px solid #e2e8f0;
+            border: 3px solid #e2e8f0;
         }
 
         .card-back {
             transform: rotateY(180deg);
             display: flex;
             flex-direction: column;
-            padding: 1.5rem;
+            padding: 1.25rem;
             justify-content: center;
             align-items: center;
             text-align: center;
             border-color: var(--primary-green);
         }
 
-        /* Sprite Mapping - Using GitHub Raw Images */
+        /* Sprite Mapping */
         .vocab-image {
             width: 100%;
             aspect-ratio: 16 / 9;
-            background-size: 400% 400%; /* 4x4 Grid */
+            background-size: 400% 400%;
             background-repeat: no-repeat;
-            border-bottom: 1px solid #edf2f7;
+            border-bottom: 2px solid #edf2f7;
         }
 
         .mnemonic-box {
             background-color: var(--accent-yellow);
-            color: #333;
-            padding: 0.75rem;
-            border-radius: 0.5rem;
+            color: #222;
+            padding: 1rem;
+            border-radius: 0.75rem;
             font-weight: bold;
-            margin-top: 1rem;
+            margin-top: 0.75rem;
             width: 100%;
-            border-left: 5px solid var(--mnemonic-orange);
+            border-left: 6px solid var(--mnemonic-orange);
+            font-size: 1.25rem; /* Larger font */
+            line-height: 1.4;
+        }
+
+        .pos-tag {
             font-size: 1.1rem;
-            line-height: 1.5;
+            color: var(--primary-green);
+            font-style: italic;
+            font-weight: 600;
+            margin-top: -0.25rem;
+            margin-bottom: 0.5rem;
         }
 
         .btn-speak {
             transition: transform 0.2s;
         }
         .btn-speak:hover {
-            transform: scale(1.2);
+            transform: scale(1.3);
             color: var(--primary-green);
         }
 
@@ -105,69 +114,64 @@
         }
     </style>
 </head>
-<body class="p-4 md:p-8">
+<body class="p-4 md:p-10">
 
-    <header class="text-center mb-10">
-        <h1 class="text-3xl md:text-4xl font-extrabold text-[#1E8449] mb-2">🧠 高頻單字 U23 互動記憶卡</h1>
-        <p class="text-gray-600 mb-4">使用 GitHub 雲端影像資源 | 方案 B：森林活力</p>
-        <div class="flex justify-center gap-4">
-            <button onclick="shuffleAndRender()" class="bg-[#1E8449] text-white px-6 py-2 rounded-full font-bold hover:bg-green-700 transition shadow-lg">
+    <header class="text-center mb-12">
+        <h1 class="text-4xl md:text-5xl font-extrabold text-[#1E8449] mb-3">🧠 高頻單字 U23 互動記憶卡</h1>
+        <p class="text-xl text-gray-600 mb-6">點選卡片查看答案與口訣 | 森林活力版</p>
+        <div class="flex justify-center gap-6">
+            <button onclick="shuffleAndRender()" class="bg-[#1E8449] text-white px-8 py-3 rounded-full text-xl font-bold hover:bg-green-700 transition shadow-xl transform hover:scale-105">
                 <i class="fas fa-random mr-2"></i> 隨機洗牌
             </button>
-            <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="bg-white text-[#1E8449] border-2 border-[#1E8449] px-6 py-2 rounded-full font-bold hover:bg-green-50 transition shadow-lg">
+            <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="bg-white text-[#1E8449] border-2 border-[#1E8449] px-8 py-3 rounded-full text-xl font-bold hover:bg-green-50 transition shadow-lg">
                 回頂部
             </button>
         </div>
     </header>
 
-    <div id="vocab-grid" class="grid grid-cols-custom gap-8 max-w-6xl mx-auto">
-        <!-- 卡片將由 JS 動態生成 -->
+    <div id="vocab-grid" class="grid grid-cols-custom gap-10 max-w-6xl mx-auto">
+        <!-- Cards injected by JS -->
     </div>
 
     <script>
-        // GitHub Raw Image URLs
         const gridImages = {
             1: "https://raw.githubusercontent.com/terenceylhc/ltvoc/main/%E9%AB%98%E9%A0%BBU23g1.jpg",
             2: "https://raw.githubusercontent.com/terenceylhc/ltvoc/main/%E9%AB%98%E9%A0%BBU23g2.jpg"
         };
 
         const vocabularyData = [
-            // Grid 1 (0-15)
-            { en: "behavior", ph: "/bɪˈhevjɚ/", cn: "行為；舉止", grid: 1, pos: 0, strategy: "諧音 (鼻黑味兒)", mnemonic: "聞聞這黑鼻子的味道，就知道他的行為舉止很有戲。" },
-            { en: "accident", ph: "/ˈæksədənt/", cn: "意外", grid: 1, pos: 1, strategy: "諧音 (愛死登)", mnemonic: "大明星愛死登上舞台，卻發生摔跤意外。" },
-            { en: "confident", ph: "/ˈɑnfədənt/", cn: "自信的", grid: 1, pos: 2, strategy: "諧音 (看我的燈)", mnemonic: "非常有自信地大喊：看我的燈！" },
-            { en: "maintain", ph: "/menˈten/", cn: "維修；保養", grid: 1, pos: 3, strategy: "諧音 (麵攤)", mnemonic: "這家麵攤老闆很注重煮麵機器的維修保養。" },
-            { en: "appeal", ph: "/əˈpil/", cn: "吸引", grid: 1, pos: 4, strategy: "諧音 (阿飄)", mnemonic: "這人長得太帥，常會吸引阿飄。" },
-            { en: "mission", ph: "/ˈmɪʃən/", cn: "任務", grid: 1, pos: 5, strategy: "諧音 (祕辛)", mnemonic: "這個艱難的任務背後隱藏著驚人的祕辛。" },
-            { en: "vitamin", ph: "/ˈvaɪtəmɪn/", cn: "維他命", grid: 1, pos: 6, strategy: "諧音 (歪頭敏)", mnemonic: "吃了維他命，頭不歪了，反應也變敏捷。" },
-            { en: "fortune", ph: "/ˈfɔrtʃən/", cn: "財富；運氣", grid: 1, pos: 7, strategy: "諧音 (富存)", mnemonic: "要把滿滿的財富與好運都存在幸運餅乾裡。" },
-            { en: "structure", ph: "/ˈstrʌktʃɚ/", cn: "結構；建築物", grid: 1, pos: 8, strategy: "諧音 (死抓車)", mnemonic: "為了研究建築結構，他死死抓著那台吊車。" },
-            { en: "import", ph: "/ˈɪmport/", cn: "進口", grid: 1, pos: 9, strategy: "拆字 (im內+port港)", mnemonic: "大船進港，將貨物從國外進口。" },
-            { en: "innocent", ph: "/ˈɪnəsnt/", cn: "天真的；清白的", grid: 1, pos: 10, strategy: "諧音 (印諾森)", mnemonic: "印著承諾的森林，只有天真清白的人能進入。" },
-            { en: "chill", ph: "/tʃɪl/", cn: "寒氣；風寒", grid: 1, pos: 11, strategy: "意象 (很chill)", mnemonic: "在冷颼颼的寒氣中喝咖啡，感覺非常 chill。" },
-            { en: "precious", ph: "/ˈpreʃəs/", cn: "珍貴的；貴重的", grid: 1, pos: 12, strategy: "諧音 (噴雪石)", mnemonic: "這顆噴出雪白光芒的寶石非常珍貴。" },
-            { en: "envy", ph: "/ˈenvɪ/", cn: "嫉妒；羨慕", grid: 1, pos: 13, strategy: "諧音 (MV)", mnemonic: "超級羨慕嫉妒那些能拍音樂錄影帶 (MV) 的明星。" },
-            { en: "faith", ph: "/feθ/", cn: "信仰；信心", grid: 1, pos: 14, strategy: "諧音 (飛思)", mnemonic: "信仰讓你的思緒飛翔，充滿信心。" },
-            { en: "postpone", ph: "/postˈpon/", cn: "延期", grid: 1, pos: 15, strategy: "諧音 (波司痛)", mnemonic: "老闆 (Boss) 頭好痛，所以會議延期。" },
-            
-            // Grid 2 (0-13)
-            { en: "dim", ph: "/dɪm/", cn: "暗淡的；模糊的", grid: 2, pos: 0, strategy: "諧音 (低明度)", mnemonic: "燈光變低明度了，看起來很暗淡模糊。" },
-            { en: "property", ph: "/ˈprɑpɚtɪ/", cn: "財產", grid: 2, pos: 1, strategy: "諧音 (破盆地)", mnemonic: "即使是這塊破盆地，也是我的珍貴財產。" },
-            { en: "anxious", ph: "/ˈæŋkʃəs/", cn: "焦慮的；急切的", grid: 2, pos: 2, strategy: "諧音 (安揪思)", mnemonic: "心不安地被揪住思緒，感到很焦慮。" },
-            { en: "murder", ph: "/ˈmɝdɚ/", cn: "殺害；謀殺", grid: 2, pos: 3, strategy: "諧音 (摸得)", mnemonic: "發生謀殺案，現場的東西都摸不得。" },
-            { en: "committee", ph: "/kəˈmɪtɪ/", cn: "委員會", grid: 2, pos: 4, strategy: "諧音 (可命題)", mnemonic: "委員會在開會討論這題目可不可命題。" },
-            { en: "moisture", ph: "/ˈmɔɪstʃɚ/", cn: "溼氣；水分", grid: 2, pos: 5, strategy: "諧音 (冒絲)", mnemonic: "牆壁不斷冒出水絲，代表溼氣太重。" },
-            { en: "optimistic", ph: "/ˌɑptəˈmɪstɪk/", cn: "樂觀的", grid: 2, pos: 6, strategy: "諧音 (阿弟，沒事滴)", mnemonic: "遇到困難都說：阿弟沒事滴，就是樂觀。" },
-            { en: "vacant", ph: "/ˈvekənt/", cn: "空的；空虛的", grid: 2, pos: 7, strategy: "諧音 (為坑)", mnemonic: "人為挖的坑洞，裡面是空的。" },
-            { en: "poverty", ph: "/ˈpɑvɚtɪ/", cn: "貧窮", grid: 2, pos: 8, strategy: "諧音 (泡麵體)", mnemonic: "身處貧窮天天吃泡麵，吃到全身變泡麵體。" },
-            { en: "capable", ph: "/ˈkepəbl/", cn: "有能力的", grid: 2, pos: 9, strategy: "諧音 (開炮吧)", mnemonic: "非常有能力的將軍大喊：開炮吧！" },
-            { en: "perform", ph: "/pɚˈfɔrm/", cn: "表演；執行", grid: 2, pos: 10, strategy: "諧音 (披風)", mnemonic: "披上帥氣的披風，開始精彩的表演。" },
-            { en: "conclusion", ph: "/kənˈkluʒən/", cn: "結論；結局", grid: 2, pos: 11, strategy: "諧音 (啃綠卷)", mnemonic: "學霸啃完這堆綠色卷軸，終於下了一個結論。" },
-            { en: "humankind", ph: "/ˈhjumənˌkaɪnd/", cn: "人類", grid: 2, pos: 12, strategy: "拆字 (Human+Kind)", mnemonic: "人類生性善良，應該互相關懷。" },
-            { en: "conscious", ph: "/ˈɑnʃəs/", cn: "有知覺的；意識到的", grid: 2, pos: 13, strategy: "諧音 (看事)", mnemonic: "能看清事物，代表你現在有知覺。" }
+            { en: "behavior", ph: "/bɪˈhevjɚ/", pos: "n.", cn: "行為；舉止", grid: 1, pos_idx: 0, strategy: "諧音 (鼻黑味兒)", mnemonic: "聞聞這黑鼻子的味道，就知道他的行為舉止很有戲。" },
+            { en: "accident", ph: "/ˈæksədənt/", pos: "n.", cn: "意外", grid: 1, pos_idx: 1, strategy: "諧音 (愛死登)", mnemonic: "大明星愛死登上舞台，卻發生摔跤意外。" },
+            { en: "confident", ph: "/ˈɑnfədənt/", pos: "adj.", cn: "自信的", grid: 1, pos_idx: 2, strategy: "諧音 (看我的燈)", mnemonic: "非常有自信地大喊：看我的燈！" },
+            { en: "maintain", ph: "/menˈten/", pos: "v.", cn: "維修；保養", grid: 1, pos_idx: 3, strategy: "諧音 (麵攤)", mnemonic: "這家麵攤老闆很注重煮麵機器的維修保養。" },
+            { en: "appeal", ph: "/əˈpil/", pos: "v.", cn: "吸引", grid: 1, pos_idx: 4, strategy: "諧音 (阿飄)", mnemonic: "這人長得太帥，常會吸引阿飄。" },
+            { en: "mission", ph: "/ˈmɪʃən/", pos: "n.", cn: "任務", grid: 1, pos_idx: 5, strategy: "諧音 (祕辛)", mnemonic: "這個艱難的任務背後隱藏著驚人的祕辛。" },
+            { en: "vitamin", ph: "/ˈvaɪtəmɪn/", pos: "n.", cn: "維他命", grid: 1, pos_idx: 6, strategy: "諧音 (歪頭敏)", mnemonic: "吃了維他命，頭不歪了，反應也變敏捷。" },
+            { en: "fortune", ph: "/ˈfɔrtʃən/", pos: "n.", cn: "財富；運氣", grid: 1, pos_idx: 7, strategy: "諧音 (富存)", mnemonic: "要把滿滿的財富與好運都存在幸運餅乾裡。" },
+            { en: "structure", ph: "/ˈstrʌktʃɚ/", pos: "v. n.", cn: "結構；建築物", grid: 1, pos_idx: 8, strategy: "諧音 (死抓車)", mnemonic: "為了研究建築結構，他死死抓著那台吊車。" },
+            { en: "import", ph: "/ˈɪmport/", pos: "v. n.", cn: "進口", grid: 1, pos_idx: 9, strategy: "拆字 (im內+port港)", mnemonic: "大船進港，將貨物從國外進口。" },
+            { en: "innocent", ph: "/ˈɪnəsnt/", pos: "adj.", cn: "天真的；清白的", grid: 1, pos_idx: 10, strategy: "諧音 (印諾森)", mnemonic: "印著承諾的森林，只有天真清白的人能進入。" },
+            { en: "chill", ph: "/tʃɪl/", pos: "n.", cn: "寒氣；風寒", grid: 1, pos_idx: 11, strategy: "意象 (很chill)", mnemonic: "在冷颼颼的寒氣中喝咖啡，感覺非常 chill。" },
+            { en: "precious", ph: "/ˈpreʃəs/", pos: "adj.", cn: "珍貴的；貴重的", grid: 1, pos_idx: 12, strategy: "諧音 (噴雪石)", mnemonic: "這顆噴出雪白光芒的寶石非常珍貴。" },
+            { en: "envy", ph: "/ˈenvɪ/", pos: "v. n.", cn: "嫉妒；羨慕", grid: 1, pos_idx: 13, strategy: "諧音 (MV)", mnemonic: "超級羨慕嫉妒那些能拍音樂錄影帶 (MV) 的明星。" },
+            { en: "faith", ph: "/feθ/", pos: "n.", cn: "信仰；信心", grid: 1, pos_idx: 14, strategy: "諧音 (飛思)", mnemonic: "信仰讓你的思緒飛翔，充滿信心。" },
+            { en: "postpone", ph: "/postˈpon/", pos: "v.", cn: "延期", grid: 1, pos_idx: 15, strategy: "諧音 (波司痛)", mnemonic: "老闆 (Boss) 頭好痛，所以會議延期。" },
+            { en: "dim", ph: "/dɪm/", pos: "adj. v.", cn: "暗淡的；模糊的", grid: 2, pos_idx: 0, strategy: "諧音 (低明度)", mnemonic: "燈光變低明度了，看起來很暗淡模糊。" },
+            { en: "property", ph: "/ˈpɑpɚtɪ/", pos: "n.", cn: "財產", grid: 2, pos_idx: 1, strategy: "諧音 (破盆地)", mnemonic: "即使是這塊破盆地，也是我的珍貴財產。" },
+            { en: "anxious", ph: "/ˈæŋkʃəs/", pos: "adj.", cn: "焦慮的；急切的", grid: 2, pos_idx: 2, strategy: "諧音 (安揪思)", mnemonic: "心不安地被揪住思緒，感到很焦慮。" },
+            { en: "murder", ph: "/ˈmɝdɚ/", pos: "v. n.", cn: "殺害；謀殺", grid: 2, pos_idx: 3, strategy: "諧音 (摸得)", mnemonic: "發生謀殺案，現場的東西都摸不得。" },
+            { en: "committee", ph: "/kəˈmɪtɪ/", pos: "n.", cn: "委員會", grid: 2, pos_idx: 4, strategy: "諧音 (可命題)", mnemonic: "委員會在開會討論這題目可不可命題。" },
+            { en: "moisture", ph: "/ˈmɔɪstʃɚ/", pos: "n.", cn: "溼氣；水分", grid: 2, pos_idx: 5, strategy: "諧音 (冒絲)", mnemonic: "牆壁不斷冒出水絲，代表溼氣太重。" },
+            { en: "optimistic", ph: "/ˌɑptəˈmɪstɪk/", pos: "adj.", cn: "樂觀的", grid: 2, pos_idx: 6, strategy: "諧音 (阿弟，沒事滴)", mnemonic: "遇到困難都說：阿弟沒事滴，就是樂觀。" },
+            { en: "vacant", ph: "/ˈvekənt/", pos: "adj.", cn: "空的；空虛的", grid: 2, pos_idx: 7, strategy: "諧音 (為坑)", mnemonic: "人為挖的坑洞，裡面是空的。" },
+            { en: "poverty", ph: "/ˈpɑvɚtɪ/", pos: "n.", cn: "貧窮", grid: 2, pos_idx: 8, strategy: "諧音 (泡麵體)", mnemonic: "身處貧窮天天吃泡麵，吃到全身變泡麵體。" },
+            { en: "capable", ph: "/ˈkepəbl/", pos: "adj.", cn: "有能力的", grid: 2, pos_idx: 9, strategy: "諧音 (開炮吧)", mnemonic: "非常有能力的將軍大喊：開炮吧！" },
+            { en: "perform", ph: "/pɚˈfɔrm/", pos: "v.", cn: "表演；執行", grid: 2, pos_idx: 10, strategy: "諧音 (披風)", mnemonic: "披上帥氣的披風，開始精彩的表演。" },
+            { en: "conclusion", ph: "/kənˈkluʒən/", pos: "n.", cn: "結論；結局", grid: 2, pos_idx: 11, strategy: "諧音 (啃綠卷)", mnemonic: "學霸啃完這堆綠色卷軸，終於下了一個結論。" },
+            { en: "humankind", ph: "/ˈhjumənˌkaɪnd/", pos: "n.", cn: "人類", grid: 2, pos_idx: 12, strategy: "拆字 (Human+Kind)", mnemonic: "人類生性善良，應該互相關懷。" },
+            { en: "conscious", ph: "/ˈɑnʃəs/", pos: "adj.", cn: "有知覺的；意識到的", grid: 2, pos_idx: 13, strategy: "諧音 (看事)", mnemonic: "能看清事物，代表你現在有知覺。" }
         ];
 
-        // Speech Logic
         function speak(text, e) {
             if (e) e.stopPropagation();
             window.speechSynthesis.cancel();
@@ -177,7 +181,6 @@
             window.speechSynthesis.speak(utterance);
         }
 
-        // CSS Sprite Position calculation
         function calculatePosition(pos) {
             const row = Math.floor(pos / 4);
             const col = pos % 4;
@@ -190,33 +193,40 @@
             const container = document.createElement('div');
             container.className = 'card-container';
             
-            const bgPos = calculatePosition(item.pos);
+            const bgPos = calculatePosition(item.pos_idx);
             const imgUrl = gridImages[item.grid];
 
             container.innerHTML = `
                 <div class="card-inner" onclick="handleCardClick(this, '${item.en.replace(/'/g, "\\'")}');">
+                    <!-- Front -->
                     <div class="card-front flex flex-col">
                         <div class="vocab-image" style="background-image: url('${imgUrl}'); background-position: ${bgPos};"></div>
                         <div class="p-4 flex flex-col items-center justify-center flex-grow w-full bg-white">
-                            <div class="flex items-center gap-3">
-                                <h2 class="text-3xl font-bold text-gray-800">${item.en}</h2>
-                                <button class="btn-speak text-gray-400 text-xl" title="Listen" onclick="speak('${item.en.replace(/'/g, "\\'")}', event)">
+                            <div class="flex items-center gap-4">
+                                <h2 class="text-4xl font-black text-gray-800">${item.en}</h2>
+                                <button class="btn-speak text-gray-300 text-2xl" onclick="speak('${item.en.replace(/'/g, "\\'")}', event)">
                                     <i class="fas fa-volume-up"></i>
                                 </button>
                             </div>
-                            <p class="text-lg text-gray-500 mt-1 font-mono">${item.ph}</p>
+                            <p class="text-xl text-gray-400 mt-2 font-mono tracking-wide">${item.ph}</p>
                         </div>
                     </div>
+                    <!-- Back -->
                     <div class="card-back">
-                        <div class="absolute top-4 left-4 text-xs font-bold text-gray-300 uppercase tracking-widest">Definition</div>
-                        <h2 class="text-4xl font-black text-[#1E8449] mb-1">${item.en}</h2>
-                        <div class="w-16 h-1 bg-[#1E8449] opacity-20 my-4 rounded-full"></div>
-                        <p class="text-2xl font-bold text-gray-800 my-2">${item.cn}</p>
+                        <h2 class="text-5xl font-black text-[#1E8449] mb-1">${item.en}</h2>
+                        <div class="pos-tag">${item.pos}</div>
+                        
+                        <div class="w-20 h-1.5 bg-[#1E8449] opacity-20 my-3 rounded-full"></div>
+                        
+                        <p class="text-3xl font-extrabold text-gray-800 my-2">${item.cn}</p>
+                        
                         <div class="mt-4 text-left w-full">
-                            <span class="text-xs font-bold text-green-700 bg-green-100 px-2 py-1 rounded">💡 記憶策略</span>
-                            <p class="text-sm text-gray-600 mt-2 italic">${item.strategy}</p>
+                            <span class="text-sm font-bold text-green-700 bg-green-100 px-3 py-1 rounded-full">💡 ${item.strategy}</span>
                         </div>
-                        <div class="mnemonic-box">${item.mnemonic}</div>
+
+                        <div class="mnemonic-box">
+                            ${item.mnemonic}
+                        </div>
                     </div>
                 </div>
             `;
@@ -230,7 +240,6 @@
             }
         }
 
-        // Render cards based on provided array
         function renderCards(data) {
             const grid = document.getElementById('vocab-grid');
             grid.innerHTML = '';
@@ -239,7 +248,6 @@
             });
         }
 
-        // Shuffle logic (Fisher-Yates)
         function shuffleAndRender() {
             const grid = document.getElementById('vocab-grid');
             grid.style.opacity = '0';
@@ -252,11 +260,10 @@
                 }
                 renderCards(shuffled);
                 grid.style.opacity = '1';
-                grid.style.transition = 'opacity 0.5s ease-in';
+                grid.style.transition = 'opacity 0.4s ease-in';
             }, 300);
         }
 
-        // Initial state: Show in original order (1-30)
         window.onload = () => {
             renderCards(vocabularyData);
         };
