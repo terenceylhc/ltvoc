@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧠 互動單字記憶卡 - 高頻U26</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&family=Lexend:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-blue: #2C3E50;
+            --vibrant-orange: #E67E22;
+        }
+
+        body {
+            font-family: 'Lexend', 'Noto Sans TC', sans-serif;
+            background-color: #f8fafc;
+            color: var(--primary-blue);
+        }
+
+        /* 核心裁切邏輯：無框化技術 */
+        .sprite-img {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            background-repeat: no-repeat;
+            background-size: 408% 408%; 
+            border-radius: 12px 12px 0 0;
+            overflow: hidden;
+            background-color: #eee;
+            transition: transform 0.3s ease;
+        }
+
+        /* 卡片翻轉動畫 */
+        .card-container {
+            perspective: 1000px;
+        }
+
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 480px; /* 增加高度以容納更大的字體 */
+            text-align: center;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+            cursor: pointer;
+        }
+
+        .card-inner.is-flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            background: white;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .card-back {
+            transform: rotateY(180deg);
+            padding: 25px;
+            justify-content: center;
+        }
+
+        .mnemonic-box {
+            background-color: rgba(230, 126, 34, 0.1);
+            border-left: 5px solid var(--vibrant-orange);
+            color: var(--vibrant-orange);
+            font-weight: 700;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 8px;
+            font-size: 1.2rem; /* 加大口訣字體 */
+            line-height: 1.6;
+        }
+
+        .btn-audio {
+            transition: all 0.2s;
+        }
+        .btn-audio:active {
+            transform: scale(0.9);
+        }
+
+        @media (max-width: 640px) {
+            .card-inner {
+                height: 520px;
+            }
+        }
+    </style>
+</head>
+<body class="p-4 md:p-12">
+
+    <header class="max-w-5xl mx-auto mb-12 text-center">
+        <h1 class="text-4xl md:text-5xl font-bold mb-4">🧠 互動單字記憶卡</h1>
+        <p class="text-slate-500 text-xl">高頻 U26：深度影像記憶工程</p>
+    </header>
+
+    <main id="card-grid" class="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-10">
+        <!-- 卡片將由 JS 生成 -->
+    </main>
+
+    <footer class="mt-20 pb-10 text-center text-slate-400 text-base">
+        單字影像工程師 © 2024 - 無框化影像渲染技術
+    </footer>
+
+    <script>
+        const vocabData = [
+            {"id": 1, "word": "represent", "phonetic": "/ˌreprɪˈzent/", "pos": "v.", "meaning": "代表", "strategy": "字根", "mnemonic": "re (再次) + present (呈現) -> 再次把盾牌「呈現」在門口代表身分。", "grid": 1},
+            {"id": 2, "word": "vision", "phonetic": "/ˈvɪʒn/", "pos": "n.", "meaning": "視野；視力", "strategy": "字根", "mnemonic": "vis (看) -> 眼睛能看到的寬廣視野。", "grid": 1},
+            {"id": 3, "word": "scholar", "phonetic": "/ˈskɑːlər/", "pos": "n.", "meaning": "學者", "strategy": "字根", "mnemonic": "在 school (學校) 鑽研一輩子的人。", "grid": 1},
+            {"id": 4, "word": "clue", "phonetic": "/kluː/", "pos": "n.", "meaning": "暗示；線索", "strategy": "諧音", "mnemonic": "「可路」-> 可以指引道路的「線索」。", "grid": 1},
+            {"id": 5, "word": "pilot", "phonetic": "/ˈpaɪlət/", "pos": "v./n.", "meaning": "駕駛；飛行員", "strategy": "諧音", "mnemonic": "「拍了它」-> 帥氣拍飛機一下，準備「駕駛」起飛。", "grid": 1},
+            {"id": 6, "word": "glance", "phonetic": "/ɡlæns/", "pos": "v./n.", "meaning": "瞥見", "strategy": "諧音", "mnemonic": "「隔欄視」-> 隔著柵欄快速看一眼，就是「瞥見」。", "grid": 1},
+            {"id": 7, "word": "pause", "phonetic": "/pɔːz/", "pos": "v./n.", "meaning": "暫停；停頓", "strategy": "諧音", "mnemonic": "「跑死」-> 跑到快累死了，趕快按「暫停」休息。", "grid": 1},
+            {"id": 8, "word": "slave", "phonetic": "/sleɪv/", "pos": "v./n.", "meaning": "做苦工；奴隸", "strategy": "諧音", "mnemonic": "「死累夫」-> 死命工作、極度累壞的農夫「奴隸」。", "grid": 1},
+            {"id": 9, "word": "mess", "phonetic": "/mes/", "pos": "v./n.", "meaning": "弄亂；混亂", "strategy": "口訣", "mnemonic": "「沒事」不要把房間弄得一團「混亂」。", "grid": 1},
+            {"id": 10, "word": "yell", "phonetic": "/jel/", "pos": "v./n.", "meaning": "吼叫", "strategy": "諧音", "mnemonic": "「耶～！」-> 高興地大聲「吼叫」出耶。", "grid": 1},
+            {"id": 11, "word": "dust", "phonetic": "/dʌst/", "pos": "v./n.", "meaning": "除去灰塵；灰塵", "strategy": "諧音", "mnemonic": "「打死它」-> 拿起抹布打向那團「灰塵」將其「除去」。", "grid": 1},
+            {"id": 12, "word": "rough", "phonetic": "/rʌf/", "pos": "adj.", "meaning": "粗糙的", "strategy": "諧音", "mnemonic": "「肉夫」-> 皮膚很「粗糙」的肌肉男。", "grid": 1},
+            {"id": 13, "word": "survey", "phonetic": "/ˈsɜːrveɪ/", "pos": "v./n.", "meaning": "調查", "strategy": "字根", "mnemonic": "sur (在上面) + vey (看) -> 從「上面」看全局就是「調查」。", "grid": 1},
+            {"id": 14, "word": "horrible", "phonetic": "/ˈhɔːrəbl/", "pos": "adj.", "meaning": "可怕的", "strategy": "諧音", "mnemonic": "「嚎了一波」-> 遇到「可怕」的東西嚇到大「嚎」。", "grid": 1},
+            {"id": 15, "word": "naked", "phonetic": "/ˈneɪkɪd/", "pos": "adj.", "meaning": "赤裸的", "strategy": "諧音", "mnemonic": "「內顆的」-> 蛋殼破了，露出「內顆」赤裸的蛋黃。", "grid": 1},
+            {"id": 16, "word": "pour", "phonetic": "/pɔːr/", "pos": "v.", "meaning": "傾倒；下大雨", "strategy": "諧音", "mnemonic": "「破耳」-> 大雨傾倒聲快震「破耳」膜。", "grid": 2},
+            {"id": 17, "word": "grocery", "phonetic": "/ˈɡroʊsəri/", "pos": "n.", "meaning": "食品雜貨店", "strategy": "諧音", "mnemonic": "「過路送你」-> 過路雜貨店買零食「送你」。", "grid": 2},
+            {"id": 18, "word": "microwave", "phonetic": "/ˈmaɪkrəˌweɪv/", "pos": "v./n.", "meaning": "微波(爐)", "strategy": "字根", "mnemonic": "micro (微) + wave (波) -> 用微小的波加熱。", "grid": 2},
+            {"id": 19, "word": "oppose", "phonetic": "/əˈpoʊz/", "pos": "v.", "meaning": "反對", "strategy": "字根", "mnemonic": "站在相對 (op) 的位置擺出 Pose 表示「反對」。", "grid": 2},
+            {"id": 20, "word": "emperor", "phonetic": "/ˈempərər/", "pos": "n.", "meaning": "皇帝", "strategy": "諧音", "mnemonic": "「俺婆惹」不起，她就像家裡的「皇帝」。", "grid": 2},
+            {"id": 21, "word": "inferior", "phonetic": "/ɪnˈfɪriər/", "pos": "adj.", "meaning": "較差的", "strategy": "諧音", "mnemonic": "「音非力」-> 音質非力，品質比較「較差」。", "grid": 2},
+            {"id": 22, "word": "ambition", "phonetic": "/æmˈbɪʃn/", "pos": "n.", "meaning": "野心", "strategy": "諧音", "mnemonic": "「俺必勝」-> 充滿必勝鬥志的「野心」。", "grid": 2},
+            {"id": 23, "word": "moral", "phonetic": "/ˈmɔːrəl/", "pos": "n./adj.", "meaning": "道德的", "strategy": "諧音", "mnemonic": "「摸肉」-> 亂摸肉是不符「道德」的。", "grid": 2},
+            {"id": 24, "word": "observe", "phonetic": "/əbˈzɜːrv/", "pos": "v.", "meaning": "觀察；遵守", "strategy": "字根", "mnemonic": "像僕人 (serve) 守在門口面前 (ob)，必須隨時「觀察」環境。", "grid": 2},
+            {"id": 25, "word": "confirm", "phonetic": "/kənˈfɜːrm/", "pos": "v.", "meaning": "證實；確認", "strategy": "諧音", "mnemonic": "「肯放」-> 老闆「肯放」手蓋章「確認」計劃。", "grid": 2},
+            {"id": 26, "word": "immediate", "phonetic": "/ɪˈmiːdiət/", "pos": "adj.", "meaning": "立刻的", "strategy": "諧音", "mnemonic": "「一秒遞」-> 一秒就遞過去，動作「立刻」。", "grid": 2},
+            {"id": 27, "word": "casual", "phonetic": "/ˈkæʒuəl/", "pos": "adj.", "meaning": "非正式的", "strategy": "諧音", "mnemonic": "「開手喔」-> 攤開雙手說喔，漫不經心又「非正式」。", "grid": 2},
+            {"id": 28, "word": "compete", "phonetic": "/kəmˈpiːt/", "pos": "v.", "meaning": "競爭", "strategy": "諧音", "mnemonic": "「肯拼」-> 只要「肯拼」就能在「競爭」中勝出。", "grid": 2},
+            {"id": 29, "word": "democracy", "phonetic": "/dɪˈmɑːkrəsi/", "pos": "n.", "meaning": "民主制度", "strategy": "諧音", "mnemonic": "「弟摸克希」-> 弟弟摸著投票箱，代表克服困難後的希望。", "grid": 2},
+            {"id": 30, "word": "strategy", "phonetic": "/ˈstrætədʒi/", "pos": "n.", "meaning": "策略", "strategy": "諧音", "mnemonic": "「使特技」-> 在比賽「使出特技」大招是我的獲勝「策略」。", "grid": 2}
+        ];
+
+        const imageUrls = {
+            grid1: 'https://raw.githubusercontent.com/terenceylhc/ltvoc/main/%E9%AB%98%E9%A0%BBU26g1.jpg',
+            grid2: 'https://raw.githubusercontent.com/terenceylhc/ltvoc/main/%E9%AB%98%E9%A0%BBU26g2.jpg'
+        };
+
+        function speak(text) {
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'en-US';
+            utterance.rate = 0.9;
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function createCard(item, index) {
+            const localIndex = index % 15;
+            const row = Math.floor(localIndex / 4);
+            const col = localIndex % 4;
+            
+            const posX = (col * 33.333).toFixed(2);
+            const posY = (row * 33.333).toFixed(2);
+            const imgUrl = item.grid === 1 ? imageUrls.grid1 : imageUrls.grid2;
+
+            const card = document.createElement('div');
+            card.className = 'card-container';
+            card.innerHTML = `
+                <div class="card-inner" id="card-${item.id}">
+                    <!-- 正面 -->
+                    <div class="card-front" onclick="flipCard(${item.id})">
+                        <div class="sprite-img" style="background-image: url('${imgUrl}'); background-position: ${posX}% ${posY}%;"></div>
+                        <div class="flex-grow flex flex-col justify-center items-center p-6">
+                            <h2 class="text-4xl md:text-5xl font-bold mb-3">${item.word}</h2>
+                            <p class="text-slate-400 text-xl mb-6">${item.phonetic}</p>
+                            <button class="btn-audio bg-slate-100 hover:bg-slate-200 p-4 rounded-full" onclick="event.stopPropagation(); speak('${item.word}')">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <!-- 反面 -->
+                    <div class="card-back" onclick="flipCard(${item.id})">
+                        <h3 class="text-3xl md:text-4xl font-bold text-slate-800 mb-4">${item.word}</h3>
+                        <div class="flex items-center justify-center gap-3 mb-4">
+                            <span class="bg-slate-200 text-slate-700 text-sm font-bold px-3 py-1 rounded">${item.pos}</span>
+                            <span class="text-3xl font-bold text-slate-900">${item.meaning}</span>
+                        </div>
+                        <div class="text-lg text-slate-500 mt-2">
+                            💡 策略：${item.strategy}
+                        </div>
+                        <div class="mnemonic-box">
+                            ${item.mnemonic}
+                        </div>
+                    </div>
+                </div>
+            `;
+            return card;
+        }
+
+        window.flipCard = function(id) {
+            const cardInner = document.getElementById(`card-${id}`);
+            const isFlipped = cardInner.classList.toggle('is-flipped');
+            if (isFlipped) {
+                const word = vocabData.find(v => v.id === id).word;
+                speak(word);
+            }
+        };
+
+        const gridElement = document.getElementById('card-grid');
+        vocabData.forEach((item, index) => {
+            gridElement.appendChild(createCard(item, index));
+        });
+    </script>
+</body>
+</html>
