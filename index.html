@@ -182,6 +182,7 @@
 
             if (activeUnits[i]) {
                 card.href = activeUnits[i];
+                card.target = "_blank"; // 在新分頁開啟
                 card.classList.add('active');
             } else {
                 card.classList.add('locked');
