@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧠 互動單字記憶卡</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #f1f5f9;
+            padding: 20px;
+        }
+
+        /* 佈局鐵律：全網格顯示，嚴禁分頁 */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(1, 1fr);
+            gap: 2.5rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        @media (min-width: 768px) {
+            .card-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* 翻轉卡片容器 */
+        .card-container {
+            perspective: 1000px;
+            cursor: pointer;
+        }
+
+        .card-inner {
+            position: relative;
+            width: 100%;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+            min-height: 520px; /* 高度自適應基礎 */
+        }
+
+        .card-container.is-flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            background: white;
+            border-radius: 28px;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-back {
+            transform: rotateY(180deg);
+            justify-content: center;
+            padding: 2.5rem;
+            text-align: center;
+        }
+
+        /* 影像無框化裁切技術：修正版 */
+        .sprite-wrapper {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            overflow: hidden; /* 擠出黑線的關鍵 */
+            background-color: #f8fafc;
+        }
+
+        .sprite-img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            /* 規格化：background-size 必須為 406% */
+            background-size: 406% 406%; 
+            background-repeat: no-repeat;
+            /* 視覺無框化：透過縮放將網格邊界擠出去 */
+            transform: scale(1.08); 
+            image-rendering: -webkit-optimize-contrast;
+        }
+
+        /* 視覺規格化 CSS */
+        .word-title-front {
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: #0f172a;
+        }
+
+        .word-title-back {
+            font-size: 3.2rem;
+            font-weight: 900;
+            color: #0f172a;
+            line-height: 1;
+        }
+
+        .phonetic {
+            font-size: 1.1rem;
+            color: #64748b;
+        }
+
+        .pos-tag {
+            font-size: 1.1rem;
+            background-color: #e2e8f0;
+            padding: 4px 12px;
+            border-radius: 8px;
+            font-style: italic;
+            font-weight: 800;
+            color: #475569;
+        }
+
+        .chinese-mean {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .mnemonic-box {
+            background-color: #ff9800; /* 橘色口訣背景 */
+            color: white;
+            padding: 1.25rem 1.5rem;
+            border-radius: 20px;
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin: 1.5rem 0;
+            box-shadow: 0 6px 15px rgba(255, 152, 0, 0.3);
+        }
+
+        .example-sentence {
+            border-top: 1px dashed #cbd5e1;
+            padding-top: 1.2rem;
+            font-size: 1.25rem;
+            color: #64748b;
+            font-style: italic;
+        }
+
+        .btn-audio {
+            background: #f1f5f9;
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="text-center mb-12 mt-8">
+        <h1 class="text-5xl font-black text-slate-800 mb-3">🧠 互動單字記憶卡</h1>
+        <p class="text-slate-500 text-lg italic">影像跳格技術修正版 ‧ 徹底無框視覺</p>
+    </header>
+
+    <main id="card-grid" class="card-grid">
+        <!-- 內容由 JS 動態生成 -->
+    </main>
+
+    <script>
+        const words = [
+            { "en": "appoint", "ph": "/əˈpɔɪnt/", "pos": "v.", "cn": "任命；指派", "strategy": "諧音 (阿婆印)", "mnemonic": "王太后「阿婆」拿出皇家大「印」，正式 appoint (任命) 你為大將軍！", "ex": "The king decided to appoint him as the new leader of the army.", "grid": 1, "pos_idx": 0 },
+            { "en": "virus", "ph": "/ˈvaɪrəs/", "pos": "n.", "cn": "病毒；電腦病毒", "strategy": "諧音 (蛙惹死)", "mnemonic": "一隻青「蛙」惹到了病「死」人的 virus (病毒)。", "ex": "A computer virus can steal your personal information.", "grid": 1, "pos_idx": 1 },
+            { "en": "despite", "ph": "/dɪˈspaɪt/", "pos": "prep.", "cn": "儘管", "strategy": "諧音 (弟死拍它)", "mnemonic": "「弟」弟就算「死」命也要「拍它」，despite (儘管) 現在正狂風暴雨。", "ex": "Despite the rain, they went for a walk in the park.", "grid": 1, "pos_idx": 2 },
+            { "en": "research", "ph": "/ˈriːsɜːrtʃ/", "pos": "v./n.", "cn": "研究", "strategy": "字根 (re-再次 + search-搜尋)", "mnemonic": "re (再次) search (搜尋)，反覆搜尋資料就是在做 research (研究)。", "ex": "The scientist spent years on medical research.", "grid": 1, "pos_idx": 3 },
+            { "en": "consume", "ph": "/kənˈsuːm/", "pos": "v.", "cn": "消耗；消費", "strategy": "諧音 (看叔買)", "mnemonic": "「看叔」拼命「買」東西，consume (消費) 了超多私房錢。", "ex": "Small cars consume less fuel than big ones.", "grid": 1, "pos_idx": 4 },
+            { "en": "website", "ph": "/ˈwebsaɪt/", "pos": "n.", "cn": "網站", "strategy": "字根 (web-網 + site-地點)", "mnemonic": "蜘蛛網 (web) 上的一個特定地點 (site)，就是我們的 website (網站)。", "ex": "I found some useful information on this website.", "grid": 1, "pos_idx": 5 },
+            { "en": "species", "ph": "/ˈspiːʃiːz/", "pos": "n.", "cn": "物種", "strategy": "字根+諧音 (Spec-看 + 稀)", "mnemonic": "大家都在 Spec (看) 這件極其「稀」有的 species (物種)。", "ex": "Pandas are a well-known endangered species.", "grid": 1, "pos_idx": 6 },
+            { "en": "access", "ph": "/ˈækses/", "pos": "v.", "cn": "接近；取得", "strategy": "諧音 (愛看塞)", "mnemonic": "我「愛看」門縫往裡「塞」卡片，成功 access (取得) 進入權。", "ex": "You need a password to access the files.", "grid": 1, "pos_idx": 7 },
+            { "en": "publish", "ph": "/ˈpʌblɪʃ/", "pos": "v.", "cn": "出版；刊登", "strategy": "字根 (publ-大眾)", "mnemonic": "把書做出來發給 public (大眾)，這動作叫 publish (出版)。", "ex": "The company will publish his new book next month.", "grid": 1, "pos_idx": 8 },
+            { "en": "contrast", "ph": "/ˈkɑːntræst/", "pos": "v./n.", "cn": "對比；差異", "strategy": "字根 (contra-相對 + st-站立)", "mnemonic": "黑與白 contra (相對) st (站立)，形成強烈的 contrast (對比)。", "ex": "There is a sharp contrast between the two brothers.", "grid": 1, "pos_idx": 9 },
+            { "en": "involve", "ph": "/ɪnˈvɑːlv/", "pos": "v.", "cn": "牽涉；包含", "strategy": "字根 (in-進去 + volve-捲)", "mnemonic": "整個人被「捲入」漩渦，這下子 involve (牽涉) 的問題大了。", "ex": "The plan involves a lot of hard work.", "grid": 1, "pos_idx": 10 },
+            { "en": "obstacle", "ph": "/ˈɑːbstəkl/", "pos": "n.", "cn": "障礙；阻礙", "strategy": "諧音 (阿婆擋客)", "mnemonic": "兇猛的「阿婆」站在門口「擋客」，她就是今天最大的 obstacle (障礙)。", "ex": "Fear of failure is a major obstacle to success.", "grid": 1, "pos_idx": 11 },
+            { "en": "site", "ph": "/saɪt/", "pos": "n.", "cn": "地點；場所", "strategy": "諧音 (賽地)", "mnemonic": "這塊土地是準備比賽的「賽地」，是一個絕佳的 site (地點)。", "ex": "This is the perfect site for our new house.", "grid": 1, "pos_idx": 12 },
+            { "en": "fame", "ph": "/feɪm/", "pos": "n.", "cn": "聲譽；名望", "strategy": "諧音 (非迷)", "mnemonic": "他的聲譽很高，讓大家都變成了「非迷」(非他不可的迷)。", "ex": "The singer achieved world fame at a young age.", "grid": 1, "pos_idx": 13 },
+            { "en": "reference", "ph": "/ˈrefrəns/", "pos": "n.", "cn": "參考資料；推薦函", "strategy": "諧音 (累翻人)", "mnemonic": "這些「累翻人」的 reference (參考資料)，我得熬夜才能看完。", "ex": "Please list three references on your resume.", "grid": 1, "pos_idx": 14 },
+            { "en": "occupy", "ph": "/ˈɑːkjupaɪ/", "pos": "v.", "cn": "占據；忙碌於", "strategy": "諧音 (我久排)", "mnemonic": "為了 occupy (占據) 第一排，「我」可是「久排」隊才搶到。", "ex": "They managed to occupy the front row seats.", "grid": 2, "pos_idx": 0 },
+            { "en": "financial", "ph": "/faɪˈnænʃl/", "pos": "adj.", "cn": "財務的；金融的", "strategy": "諧音 (飛難收)", "mnemonic": "鈔票長翅膀「飛」走「難」以「收」回，發生 financial (財務的) 危機。", "ex": "The company is facing serious financial difficulties.", "grid": 2, "pos_idx": 1 },
+            { "en": "impact", "ph": "/ˈɪmpækt/", "pos": "n.", "cn": "衝擊；影響", "strategy": "諧音 (硬拍客)", "mnemonic": "拿「硬」球「拍」向「客」人，造成巨大的 impact (衝擊)。", "ex": "The impact of the explosion broke all the windows.", "grid": 2, "pos_idx": 2 },
+            { "en": "quarrel", "ph": "/ˈkwɔːrəl/", "pos": "v./n.", "cn": "爭吵；爭論", "strategy": "諧音 (快肉)", "mnemonic": "為了搶一塊「快」熟的「肉」，兩人大聲 quarrel (爭吵)。", "ex": "The siblings had a loud quarrel over the last cookie.", "grid": 2, "pos_idx": 3 },
+            { "en": "otherwise", "ph": "/ˈʌðərwaɪz/", "pos": "adv.", "cn": "否則；不然", "strategy": "字根 (other-別的 + wise-方向)", "mnemonic": "走向 other (別的) wise (方向) 吧！otherwise (否則) 你會撞到牆。", "ex": "You must hurry; otherwise, you'll miss the train.", "grid": 2, "pos_idx": 4 },
+            { "en": "apology", "ph": "/əˈpɑːlədʒi/", "pos": "n.", "cn": "道歉", "strategy": "諧音 (阿婆邏輯)", "mnemonic": "「阿婆」的「邏輯」很簡單：做錯事就得乖乖遞上 apology (道歉)。", "ex": "He offered a sincere apology for his rude behavior.", "grid": 2, "pos_idx": 5 },
+            { "en": "forecast", "ph": "/ˈfɔːrkæst/", "pos": "v./n.", "cn": "預測；預報", "strategy": "字根 (fore-前 + cast-投)", "mnemonic": "往 fore (前) 方 cast (投) 出水晶球，來 forecast (預測) 運勢。", "ex": "The weather forecast predicts a sunny weekend.", "grid": 2, "pos_idx": 6 },
+            { "en": "classify", "ph": "/ˈklæsɪfaɪ/", "pos": "v.", "cn": "將……分類", "strategy": "字根 (class-班級 + -ify-使...)", "mnemonic": "使學生進入不同的 class (班級)，就是將學生 classify (分類)。", "ex": "Biologists classify animals into different groups.", "grid": 2, "pos_idx": 7 },
+            { "en": "imply", "ph": "/ɪmˈplaɪ/", "pos": "v.", "cn": "暗示；意味著", "strategy": "諧音 (音拍)", "mnemonic": "音樂的「音」樂「拍」子，悄悄地 imply (暗示) 了特務的密碼。", "ex": "Her smile seemed to imply that she knew my secret.", "grid": 2, "pos_idx": 8 },
+            { "en": "consist", "ph": "/kənˈsɪst/", "pos": "v.", "cn": "由...組成", "strategy": "字根 (con-共 + sist-立)", "mnemonic": "大家 con (共) 同 sist (立) 在一起，才能 consist (組成) 一支強隊。", "ex": "The jury consists of twelve ordinary citizens.", "grid": 2, "pos_idx": 9 },
+            { "en": "preserve", "ph": "/prɪˈzɜːrv/", "pos": "v.", "cn": "保存；維護", "strategy": "字根 (pre-預先 + serve-保留)", "mnemonic": "pre (預先) 把森林 serve (保留) 下來，才能 preserve (維護) 環境。", "ex": "We need to preserve our cultural traditions.", "grid": 2, "pos_idx": 10 },
+            { "en": "drown", "ph": "/draʊn/", "pos": "v.", "cn": "溺水", "strategy": "諧音 (抓)", "mnemonic": "快要 drown (溺水) 的時候，手會拼命往上亂「抓」。", "ex": "A child almost drowned in the pool yesterday.", "grid": 2, "pos_idx": 11 },
+            { "en": "humid", "ph": "/ˈhjuːmɪd/", "pos": "adj.", "cn": "潮溼的", "strategy": "諧音 (休悶的)", "mnemonic": "在「休」息室感到「悶的」，因為空氣太 humid (潮溼)。", "ex": "The air is very hot and humid in tropical regions.", "grid": 2, "pos_idx": 12 },
+            { "en": "deposit", "ph": "/dɪˈpɑːzɪt/", "pos": "v./n.", "cn": "存款；保證金", "strategy": "諧音 (抵押室)", "mnemonic": "走進銀行的「抵押室」，把錢存進去當 deposit (存款)。", "ex": "You must pay a deposit before renting the apartment.", "grid": 2, "pos_idx": 13 },
+            { "en": "awesome", "ph": "/ˈɔːsəm/", "pos": "adj.", "cn": "很棒的", "strategy": "諧音 (阿三送)", "mnemonic": "「阿三」突然「送」我超跑，感覺真是 awesome (很棒的)！", "ex": "The fireworks display was absolutely awesome.", "grid": 2, "pos_idx": 14 }
+        ];
+
+        const imgUrls = {
+            1: "https://github.com/terenceylhc/ltvoc/blob/main/%E9%AB%98%E9%A0%BBU27g1.jpg?raw=true",
+            2: "https://github.com/terenceylhc/ltvoc/blob/main/%E9%AB%98%E9%A0%BBU27g2.jpg?raw=true"
+        };
+
+        function speak(text) {
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'en-US';
+            utterance.rate = 0.85;
+            window.speechSynthesis.cancel();
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function createCard(data, index) {
+            const col = data.pos_idx % 4;
+            const row = Math.floor(data.pos_idx / 4);
+            
+            // 跳格邏輯：CSS 百分比位移在 background-size 存在時，
+            // 會自動計算 (圖片寬度 - 容器寬度) * 百分比。
+            // 對於 4x4 網格，標準位移百分比為 0, 33.33, 66.66, 100
+            const posX = (col * 33.3333).toFixed(4);
+            const posY = (row * 33.3333).toFixed(4);
+
+            const card = document.createElement('div');
+            card.className = 'card-container';
+            card.innerHTML = `
+                <div class="card-inner" id="card-${index}">
+                    <!-- 正面 (視覺引導) -->
+                    <div class="card-front">
+                        <div class="sprite-wrapper">
+                            <div class="sprite-img" style="background-image: url('${imgUrls[data.grid]}'); background-position: ${posX}% ${posY}%;"></div>
+                        </div>
+                        <div class="flex-1 flex flex-col justify-center items-center p-6 text-center">
+                            <h2 class="word-title-front mb-2">${data.en}</h2>
+                            <div class="flex items-center gap-3">
+                                <span class="phonetic">${data.ph}</span>
+                                <button class="btn-audio" onclick="event.stopPropagation(); speak('${data.en}')">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 反面 (文字細節) -->
+                    <div class="card-back">
+                        <h2 class="word-title-back mb-2">${data.en}</h2>
+                        <div class="flex justify-center items-center gap-4 mb-4">
+                            <span class="pos-tag">${data.pos}</span>
+                            <span class="chinese-mean">${data.cn}</span>
+                        </div>
+                        <p class="text-slate-500 font-bold mb-1">💡 策略：${data.strategy}</p>
+                        <div class="mnemonic-box">
+                            ${data.mnemonic}
+                        </div>
+                        <div class="example-sentence">
+                            "${data.ex}"
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            card.onclick = () => {
+                const isFlippingToBack = !card.classList.contains('is-flipped');
+                card.classList.toggle('is-flipped');
+                if (isFlippingToBack) {
+                    speak(data.en);
+                }
+            };
+
+            return card;
+        }
+
+        const grid = document.getElementById('card-grid');
+        words.forEach((word, idx) => {
+            grid.appendChild(createCard(word, idx));
+        });
+    </script>
+</body>
+</html>
