@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧠高頻U28互動單字記憶卡 - High Frequency U28</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #f8fafc;
+            color: #0f172a;
+        }
+
+        /* 翻牌動畫核心 */
+        .card-container {
+            perspective: 1000px;
+            height: auto;
+            min-height: 480px;
+        }
+
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+            cursor: pointer;
+        }
+
+        .card-inner.is-flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 28px;
+            background: white;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .card-back {
+            transform: rotateY(180deg);
+            padding: 2rem;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        /* 影像無框化技術 (Safe Zone Cropping) */
+        .image-box {
+            position: relative;
+            width: 100%;
+            padding-top: 56.25%; /* 16:9 */
+            overflow: hidden;
+            background-color: #eee;
+        }
+
+        .sprite-img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: 406%; /* 徹底無框技術：消除網格邊線 */
+            background-repeat: no-repeat;
+            transition: transform 0.3s ease;
+        }
+
+        /* 內容樣式 */
+        .word-title-front { font-size: 2.5rem; font-weight: 900; }
+        .word-title-back { font-size: 3.2rem; font-weight: 900; color: #0f172a; line-height: 1.1; }
+        .phonetic { font-size: 1.1rem; color: #64748b; }
+        
+        .pos-tag {
+            font-size: 1.1rem;
+            background-color: #e2e8f0;
+            padding: 2px 12px;
+            border-radius: 6px;
+            font-weight: 800;
+            font-style: italic;
+        }
+
+        .chinese-meaning { font-size: 1.6rem; font-weight: 700; margin-left: 0.5rem; }
+        
+        .strategy-text { font-size: 1rem; color: #64748b; margin: 1rem 0; }
+        
+        .mnemonic-box {
+            background-color: #ff9800;
+            color: white;
+            padding: 1.25rem;
+            border-radius: 20px;
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin: 1rem 0;
+            width: 100%;
+        }
+
+        .example-divider {
+            width: 100%;
+            border-top: 1px dashed #cbd5e1;
+            margin: 1rem 0;
+        }
+
+        .example-text {
+            font-size: 1.25rem;
+            color: #64748b;
+            font-style: italic;
+            line-height: 1.4;
+        }
+
+        .speaker-btn {
+            background: #f1f5f9;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 8px;
+            transition: background 0.2s;
+        }
+        
+        .speaker-btn:hover { background: #e2e8f0; }
+
+        @media (max-width: 768px) {
+            .card-container { min-height: 520px; }
+            .word-title-back { font-size: 2.5rem; }
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <header class="max-w-6xl mx-auto mb-12 text-center">
+        <h1 class="text-4xl md:text-5xl font-black mb-4">🧠高頻U28互動單字記憶卡</h1>
+        <p class="text-slate-500 text-lg">高頻單字 Unit 28 • 共 30 個核心詞彙</p>
+    </header>
+
+    <main class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8" id="card-grid">
+        <!-- 卡片將由 JS 生成 -->
+    </main>
+
+    <footer class="text-center mt-20 pb-10 text-slate-400">
+        <p></p>
+    </footer>
+
+    <script>
+        const words = [
+  {
+    "en": "furthermore",
+    "ph": "/ˌfɜːrðərˈmɔːr/",
+    "pos": "adv.",
+    "cn": "此外；而且",
+    "strategy": "字根 (further + more)",
+    "mnemonic": "向前 (further) 走更多 (more) 的路，furthermore (此外) 還有驚喜。",
+    "ex": "He is a good worker; furthermore, he is very punctual.",
+    "grid": 1,
+    "pos_idx": 0
+  },
+  {
+    "en": "contribute",
+    "ph": "/kənˈtrɪbjuːt/",
+    "pos": "v.",
+    "cn": "貢獻；促成",
+    "strategy": "字根 (con-共同 + tribut-給)",
+    "mnemonic": "大家 con- (共同) 將財物 -tribute (給予)，合力 contribute (貢獻)。",
+    "ex": "Many people contributed money to the earthquake relief.",
+    "grid": 1,
+    "pos_idx": 1
+  },
+  {
+    "en": "identity",
+    "ph": "/aɪˈdentəti/",
+    "pos": "n.",
+    "cn": "身分",
+    "strategy": "字根 (id-相同 + ent-存在)",
+    "mnemonic": "透過與資料庫 id- (相同) 的特徵，確認你的 identity (身分)。",
+    "ex": "The police are trying to find out the identity of the victim.",
+    "grid": 1,
+    "pos_idx": 2
+  },
+  {
+    "en": "percent",
+    "ph": "/pərˈsent/",
+    "pos": "n./adj./adv.",
+    "cn": "百分比；百分之……",
+    "strategy": "字根 (per-每 + cent-一百)",
+    "mnemonic": "per- (每一) 個 -cent (一百) 的小方格，都代表一個 percent (百分比)。",
+    "ex": "About ten percent of the people were absent.",
+    "grid": 1,
+    "pos_idx": 3
+  },
+  {
+    "en": "associate",
+    "ph": "/əˈsoʊʃieɪt/",
+    "pos": "v./n.",
+    "cn": "聯想；夥伴",
+    "strategy": "字根 (as-湊 + soci-夥伴)",
+    "mnemonic": "與 -soci- (夥伴) as- (湊) 在一起，產生 associate (聯想) 與合作。",
+    "ex": "I always associate coffee with relaxation.",
+    "grid": 1,
+    "pos_idx": 4
+  },
+  {
+    "en": "volunteer",
+    "ph": "/ˌvɑːlənˈtɪr/",
+    "pos": "v./n.",
+    "cn": "志工；自願做",
+    "strategy": "字根 (vol-意志 + eer-人)",
+    "mnemonic": "依據自己的 vol- (意志) 跨步而出的人，就是熱心的 volunteer (志工)。",
+    "ex": "She volunteered to clean up the park on Sunday.",
+    "grid": 1,
+    "pos_idx": 5
+  },
+  {
+    "en": "evident",
+    "ph": "/ˈevɪdənt/",
+    "pos": "adj.",
+    "cn": "明顯的",
+    "strategy": "字根 (e-外 + vid-看)",
+    "mnemonic": "從 e- (外) 就能輕鬆 -vid- (看) 到，真是太 evident (明顯) 了。",
+    "ex": "It was evident that she was unhappy with the results.",
+    "grid": 1,
+    "pos_idx": 6
+  },
+  {
+    "en": "route",
+    "ph": "/ruːt/",
+    "pos": "n.",
+    "cn": "路線",
+    "strategy": "諧音 (路透)",
+    "mnemonic": "這張地圖把所有的 route (路線) 都 「路」 徑 「透」 明化了。",
+    "ex": "Which route should we take to get to the airport?",
+    "grid": 1,
+    "pos_idx": 7
+  },
+  {
+    "en": "annoy",
+    "ph": "/əˈnɔɪ/",
+    "pos": "v.",
+    "cn": "惹惱；困擾",
+    "strategy": "字根 (in-在內 + od-恨)",
+    "mnemonic": "蚊子鑽進耳 in- (內)，吵到你心生 -od (恨)，這種干擾最 annoy (惹惱)。",
+    "ex": "The loud noise from the street annoyed the students.",
+    "grid": 1,
+    "pos_idx": 8
+  },
+  {
+    "en": "inspire",
+    "ph": "/ɪnˈspaɪər/",
+    "pos": "v.",
+    "cn": "鼓舞；激發",
+    "strategy": "字根 (in-入 + spire-呼吸/魂)",
+    "mnemonic": "將靈感 in- (吸入) 藝術家的 -spire (靈魂)，徹底 inspire (鼓舞) 他。",
+    "ex": "His success inspired many young people to work hard.",
+    "grid": 1,
+    "pos_idx": 9
+  },
+  {
+    "en": "pace",
+    "ph": "/peɪs/",
+    "pos": "n.",
+    "cn": "步調",
+    "strategy": "字根 (pass-跨步)",
+    "mnemonic": "每一次穩定 pass- (踏步) 的節奏，就是路跑的 pace (步調)。",
+    "ex": "We need to keep a steady pace during the long run.",
+    "grid": 1,
+    "pos_idx": 10
+  },
+  {
+    "en": "priority",
+    "ph": "/praɪˈɔːrəti/",
+    "pos": "n.",
+    "cn": "優先；優先權",
+    "strategy": "字根 (prior-前面/先)",
+    "mnemonic": "排在 prior- (最前面) 的事情，擁有最高 priority (優先權)。",
+    "ex": "Safety is our first priority on this construction site.",
+    "grid": 1,
+    "pos_idx": 11
+  },
+  {
+    "en": "solar",
+    "ph": "/ˈsoʊlər/",
+    "pos": "adj.",
+    "cn": "太陽的",
+    "strategy": "字根 (sol-太陽)",
+    "mnemonic": "直接吸收 sol- (太陽) 的能量，就是 solar (太陽能)。",
+    "ex": "The solar panels on the roof generate electricity.",
+    "grid": 1,
+    "pos_idx": 12
+  },
+  {
+    "en": "charity",
+    "ph": "/ˈtʃærəti/",
+    "pos": "n.",
+    "cn": "慈善團體；慈善",
+    "strategy": "字根 (char-珍愛)",
+    "mnemonic": "因為 char- (珍愛) 每一個生命，所以投入 charity (慈善)。",
+    "ex": "He donated all his money to a children's charity.",
+    "grid": 1,
+    "pos_idx": 13
+  },
+  {
+    "en": "recover",
+    "ph": "/rɪˈkʌvər/",
+    "pos": "v.",
+    "cn": "恢復；重新找到",
+    "strategy": "字根 (re-再次 + cover-蓋)",
+    "mnemonic": "re- (再次) 用繃帶將傷口 -cover (蓋住)，身體就會 recover (恢復)。",
+    "ex": "It took him a long time to recover from the illness.",
+    "grid": 1,
+    "pos_idx": 14
+  },
+  {
+    "en": "bargain",
+    "ph": "/ˈbɑːrɡən/",
+    "pos": "v./n.",
+    "cn": "討價還價；買賣",
+    "strategy": "諧音 (吧跟)",
+    "mnemonic": "在酒 「吧」 (bar-) 「跟」 (-gain) 老闆 bargain (討價還價)。",
+    "ex": "I managed to get a good bargain on this jacket.",
+    "grid": 2,
+    "pos_idx": 0
+  },
+  {
+    "en": "monitor",
+    "ph": "/ˈmɑːnɪtər/",
+    "pos": "v./n.",
+    "cn": "監控；監視器",
+    "strategy": "字根 (mon-警告)",
+    "mnemonic": "mon- (警告) 你有人在偷看，全靠這台 monitor (監視器)。",
+    "ex": "The nurses monitor the patient's heart rate constantly.",
+    "grid": 2,
+    "pos_idx": 1
+  },
+  {
+    "en": "overcome",
+    "ph": "/ˌoʊvərˈkʌm/",
+    "pos": "v.",
+    "cn": "克服；戰勝",
+    "strategy": "字根 (over-越過 + come)",
+    "mnemonic": "從阻礙上 over- (越過) 而 come (來)，代表你已 overcome (克服) 難關。",
+    "ex": "He overcame his fear of public speaking through practice.",
+    "grid": 2,
+    "pos_idx": 2
+  },
+  {
+    "en": "estimate",
+    "ph": "/ˈestɪmeɪt/",
+    "pos": "n./v.",
+    "cn": "估計",
+    "strategy": "字根 (estim-價值)",
+    "mnemonic": "心中默默 estim- (衡量) 這顆鑽石的價值，就是在 estimate (估計)。",
+    "ex": "We estimate that the project will take six months.",
+    "grid": 2,
+    "pos_idx": 3
+  },
+  {
+    "en": "encounter",
+    "ph": "/ɪnˈkaʊntər/",
+    "pos": "v./n.",
+    "cn": "遭遇；偶然相遇",
+    "strategy": "字根 (en-使 + counter-相對)",
+    "mnemonic": "在轉角處使兩人 counter (對面) 站立，這場 encounter (相遇) 太意外。",
+    "ex": "I encountered an old friend while walking in the park.",
+    "grid": 2,
+    "pos_idx": 4
+  },
+  {
+    "en": "option",
+    "ph": "/ˈɑːpʃn/",
+    "pos": "n.",
+    "cn": "選擇",
+    "strategy": "字根 (opt-選)",
+    "mnemonic": "在多個 opt- (選擇) 項目中選一個，這就是你的 option (選擇)。",
+    "ex": "You have the option to pay in cash or by card.",
+    "grid": 2,
+    "pos_idx": 5
+  },
+  {
+    "en": "resolve",
+    "ph": "/rɪˈzɑːlv/",
+    "pos": "v.",
+    "cn": "決心；解決",
+    "strategy": "字根 (re-加強 + solve-鬆開)",
+    "mnemonic": "加強 re- 努力去 -solve (鬆開) 繩結，展現了 resolve (解決問題的決心)。",
+    "ex": "They are working hard to resolve the problem quickly.",
+    "grid": 2,
+    "pos_idx": 6
+  },
+  {
+    "en": "revise",
+    "ph": "/rɪˈvaɪz/",
+    "pos": "v.",
+    "cn": "修訂；修正",
+    "strategy": "字根 (re-再次 + vis-看)",
+    "mnemonic": "re- (再次) 回頭 -vis- (看) 寫好的草稿，為了進行 revise (修訂)。",
+    "ex": "She revised her essay to improve the grammar.",
+    "grid": 2,
+    "pos_idx": 7
+  },
+  {
+    "en": "possess",
+    "ph": "/pəˈzes/",
+    "pos": "v.",
+    "cn": "擁有",
+    "strategy": "諧音 (包塞斯)",
+    "mnemonic": "「包包的 Size」(Bag sizes) 決定了你今天能 possess (擁有) 多少東西。",
+    "ex": "The country possesses many natural resources.",
+    "grid": 2,
+    "pos_idx": 8
+  },
+  {
+    "en": "convince",
+    "ph": "/kənˈvɪns/",
+    "pos": "v.",
+    "cn": "使信服；使確信",
+    "strategy": "字根 (con-完全 + vinc-征服)",
+    "mnemonic": "用道理 con- (完全) -vinc- (征服) 對方的心，讓對方被 convince (說服)。",
+    "ex": "I tried to convince him to go to the doctor, but he refused.",
+    "grid": 2,
+    "pos_idx": 9
+  },
+  {
+    "en": "critical",
+    "ph": "/ˈkrɪtɪkl/",
+    "pos": "adj.",
+    "cn": "關鍵性的；批評的",
+    "strategy": "字根 (crit-判斷)",
+    "mnemonic": "在 crit- (判斷) 是非的 critical (關鍵) 時刻，不能出錯。",
+    "ex": "The first 24 hours after the surgery are critical.",
+    "grid": 2,
+    "pos_idx": 10
+  },
+  {
+    "en": "pregnant",
+    "ph": "/ˈpreɡnənt/",
+    "pos": "adj.",
+    "cn": "懷孕的",
+    "strategy": "諧音 (配個男的)",
+    "mnemonic": "只要 「配」 (pre-) 了個 「男」 (-nan-) 的，就有機會 pregnant (懷孕)。",
+    "ex": "My sister is six months pregnant.",
+    "grid": 2,
+    "pos_idx": 11
+  },
+  {
+    "en": "potential",
+    "ph": "/pəˈtenʃl/",
+    "pos": "n./adj.",
+    "cn": "潛力；潛在的",
+    "strategy": "諧音 (破天秀)",
+    "mnemonic": "爆發隱藏的 potential (潛力)，展現一場 「破天」 荒的大 「秀」。",
+    "ex": "He has the potential to become a great leader.",
+    "grid": 2,
+    "pos_idx": 12
+  },
+  {
+    "en": "mechanic",
+    "ph": "/məˈkænɪk/",
+    "pos": "n.",
+    "cn": "技工",
+    "strategy": "字根 (mech-機器)",
+    "mnemonic": "專門修理 mech- (機器) 的高手，就是 mechanic (技工)。",
+    "ex": "The mechanic spent all afternoon fixing the car engine.",
+    "grid": 2,
+    "pos_idx": 13
+  },
+  {
+    "en": "scarcely",
+    "ph": "/ˈskersli/",
+    "pos": "adv.",
+    "cn": "幾乎不",
+    "strategy": "字根 (scarc-稀少)",
+    "mnemonic": "資源太 scarc- (稀少)，導致我 scarcely (幾乎不) 夠用。",
+    "ex": "I scarcely had enough time to finish the exam.",
+    "grid": 2,
+    "pos_idx": 14
+  }
+];
+
+        const gridImages = {
+            1: "https://raw.githubusercontent.com/terenceylhc/ltvoc/main/%E9%AB%98%E9%A0%BBU28g1.jpg",
+            2: "https://raw.githubusercontent.com/terenceylhc/ltvoc/main/%E9%AB%98%E9%A0%BBU28g2.jpg"
+        };
+
+        const gridContainer = document.getElementById('card-grid');
+
+        function speak(text) {
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'en-US';
+            utterance.rate = 0.9;
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function createCard(item) {
+            const col = item.pos_idx % 4;
+            const row = Math.floor(item.pos_idx / 4);
+            
+            // 計算精確的 background-position
+            // 4x4 網格，x 和 y 分別為 0, 33.33, 66.66, 100
+            const xPos = (col / 3) * 100;
+            const yPos = (row / 3) * 100;
+
+            const card = document.createElement('div');
+            card.className = 'card-container';
+            card.innerHTML = `
+                <div class="card-inner" id="inner-${item.en}">
+                    <div class="card-front">
+                        <div class="image-box">
+                            <div class="sprite-img" style="background-image: url('${gridImages[item.grid]}'); background-position: ${xPos}% ${yPos}%;"></div>
+                        </div>
+                        <div class="flex-1 flex flex-col justify-center items-center p-6">
+                            <h2 class="word-title-front">${item.en}</h2>
+                            <div class="flex items-center mt-2">
+                                <span class="phonetic">${item.ph}</span>
+                                <button class="speaker-btn" onclick="event.stopPropagation(); speak('${item.en}')">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-back">
+                        <h2 class="word-title-back">${item.en}</h2>
+                        <div class="flex items-center mt-4">
+                            <span class="pos-tag">${item.pos}</span>
+                            <span class="chinese-meaning">${item.cn}</span>
+                        </div>
+                        <p class="strategy-text">💡 策略：${item.strategy}</p>
+                        <div class="mnemonic-box">
+                            ${item.mnemonic}
+                        </div>
+                        <div class="example-divider"></div>
+                        <p class="example-text">${item.ex}</p>
+                    </div>
+                </div>
+            `;
+
+            const inner = card.querySelector('.card-inner');
+            inner.addEventListener('click', () => {
+                const isFlipped = inner.classList.toggle('is-flipped');
+                if (isFlipped) {
+                    // 翻面時自動朗讀
+                    speak(item.en);
+                }
+            });
+
+            return card;
+        }
+
+        // 初始化所有卡片
+        words.forEach(item => {
+            gridContainer.appendChild(createCard(item));
+        });
+    </script>
+</body>
+</html>
