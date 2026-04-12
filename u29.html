@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧠高頻U29互動單字記憶卡</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
+        
+        body {
+            background-color: #f8fafc;
+            font-family: 'Noto Sans TC', sans-serif;
+            color: #0f172a;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* 佈局鐵律：全網格顯示，嚴禁分頁 */
+        .vocab-grid {
+            display: grid;
+            gap: 2.5rem;
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* 響應式欄位：電腦版固定 2 張；手機版固定 1 張 */
+        @media (min-width: 1024px) { .vocab-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 1023px) { .vocab-grid { grid-template-columns: 1fr; } }
+
+        .card-container {
+            perspective: 1500px;
+            cursor: pointer;
+            /* 高度自適應，消除多餘空白 */
+            height: auto;
+            min-height: 520px;
+        }
+
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+        }
+
+        .card-container.is-flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        /* 卡片容器視覺規格 */
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 28px;
+            background: white;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .card-back {
+            transform: rotateY(180deg);
+            padding: 2.5rem;
+            justify-content: center; /* 垂直居中排列 */
+            align-items: center;
+        }
+
+        /* 影像處理：16:9 與 406% 溢位裁切 */
+        .image-box {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            overflow: hidden;
+            position: relative;
+            background: #eee;
+        }
+
+        .sprite-img {
+            width: 100%;
+            height: 100%;
+            background-size: 406%; /* 徹底消除邊框線 */
+            background-repeat: no-repeat;
+            transition: transform 0.3s ease;
+        }
+
+        /* 互動元件 */
+        .btn-speak {
+            background: #f1f5f9;
+            border-radius: 50%;
+            width: 42px;
+            height: 42px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #64748b;
+            transition: all 0.2s;
+        }
+        .btn-speak:hover { 
+            background: #e2e8f0; 
+            color: #0f172a;
+            transform: scale(1.1);
+        }
+
+        /* 反面細節規格 */
+        .mnemonic-box {
+            background-color: #ff9800; /* 口訣背景橘色 */
+            color: white;
+            padding: 1.25rem 1.75rem;
+            border-radius: 20px;
+            font-size: 1.3rem;
+            font-weight: 800;
+            margin: 1.5rem 0;
+            width: 100%;
+            line-height: 1.5;
+            text-align: center;
+        }
+
+        .example-divider {
+            border-top: 1.5px dashed #cbd5e1; /* 灰色細虛線 */
+            width: 90%;
+            margin: 1.25rem 0;
+        }
+
+        .pos-tag {
+            background: #e2e8f0;
+            padding: 0.25rem 1rem;
+            border-radius: 10px;
+            font-style: italic;
+            font-weight: 800;
+            font-size: 1.1rem;
+            color: #475569;
+        }
+
+        /* 文字陰影增強可讀性 */
+        .word-title {
+            letter-spacing: -0.02em;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="py-12 text-center">
+        <h1 class="text-5xl font-black text-slate-900 mb-3">🧠高頻U29互動單字記憶卡</h1>
+        <p class="text-slate-500 text-lg">高頻單字 Unit 29 · 共 30 個精選詞彙</p>
+    </header>
+
+    <div class="vocab-grid" id="vocabGrid">
+        <!-- 卡片將由 JavaScript 自動注入 -->
+    </div>
+
+    <footer class="py-12 text-center text-slate-400 text-sm">
+        單字數據處理由 Gem 1/2/3 協作完成 · 視覺影像精確比例 406% 裁切
+    </footer>
+
+    <script>
+        const vocabData = [
+            {"en": "entertain", "ph": "/ˌentərˈteɪn/", "pos": "v.", "cn": "使娛樂", "strategy": "字根 (inter-中 + tain-握)", "mnemonic": "在節目 inter- (中間) -tain (握住) 觀眾目光，就是為了 entertain (娛樂) 大眾。", "ex": "The clown entertained the children with magic tricks.", "grid": 1, "pos_idx": 0},
+            {"en": "addict", "ph": "/ˈædɪkt/", "pos": "n.", "cn": "成癮者", "strategy": "諧音 (愛得渴)", "mnemonic": "對某樣東西 「愛得」 很 「渴」 求，每一滴都要，就是 addict (成癮者)。", "ex": "He is a video game addict and plays for ten hours a day.", "grid": 1, "pos_idx": 1},
+            {"en": "predict", "ph": "/prɪˈdɪkt/", "pos": "v.", "cn": "預測", "strategy": "字根 (pre-前 + dict-說)", "mnemonic": "在事情發生 pre- (之前) 就先 -dict (說) 出來，就是 predict (預測)。", "ex": "It is difficult to predict the future of the stock market.", "grid": 1, "pos_idx": 2},
+            {"en": "dominate", "ph": "/ˈdɑːmɪneɪt/", "pos": "v.", "cn": "支配；主導", "strategy": "字根 (domin-領主)", "mnemonic": "像 domin- (領主) 一樣站在高處，dominate (支配) 整個領地。", "ex": "One company dominates the mobile phone market.", "grid": 1, "pos_idx": 3},
+            {"en": "community", "ph": "/kəˈmjuːnəti/", "pos": "n.", "cn": "社區", "strategy": "字根 (com-共 + muni-服務)", "mnemonic": "大家 com- (共同) 負擔 -muni (服務職責)，就組成了 community (社區)。", "ex": "We live in a friendly and quiet community.", "grid": 1, "pos_idx": 4},
+            {"en": "accomplish", "ph": "/əˈkɑːmplɪʃ/", "pos": "v.", "cn": "完成；達到", "strategy": "字根 (ac-趨向 + pl-滿)", "mnemonic": "把進度條趨向 -pl- (充滿) 的狀態，就是 accomplish (完成) 任務。", "ex": "You can accomplish anything if you work hard enough.", "grid": 1, "pos_idx": 5},
+            {"en": "cooperate", "ph": "/koʊˈɑːpəreɪt/", "pos": "v.", "cn": "合作", "strategy": "字根 (co-一起 + operate-操作)", "mnemonic": "大家 co- (一起) 動手 -operate (操作)，才是團隊 cooperate (合作)。", "ex": "The two countries cooperated to fight the disease.", "grid": 1, "pos_idx": 6},
+            {"en": "economy", "ph": "/ɪˈkɑːnəmi/", "pos": "n.", "cn": "經濟", "strategy": "諧音 (一口糯米)", "mnemonic": "就算只有 「一口糯米」，也要精打細算，這就是 economy (經濟)。", "ex": "The global economy is facing a difficult time.", "grid": 1, "pos_idx": 7},
+            {"en": "marathon", "ph": "/ˈmærəθɑːn/", "pos": "n.", "cn": "馬拉松賽跑", "strategy": "諧音 (馬拉鬆)", "mnemonic": "跑完 marathon (馬拉松)，腿就像被 「馬拉」 完一樣 「鬆」 掉了。", "ex": "He is training hard to run his first marathon.", "grid": 1, "pos_idx": 8},
+            {"en": "exaggerate", "ph": "/ɪɡˈzædʒəreɪt/", "pos": "v.", "cn": "誇張；誇大", "strategy": "字根 (ex-外 + agger-堆積)", "mnemonic": "把事實向 ex- (外) -agger (堆積) 更多，這就是 exaggerate (誇大)。", "ex": "He tends to exaggerate his achievements.", "grid": 1, "pos_idx": 9},
+            {"en": "compose", "ph": "/kəmˈpoʊz/", "pos": "v.", "cn": "作曲；組成", "strategy": "字根 (com-共 + pos-放)", "mnemonic": "把不同音符 com- (一起) -pos (放置) 在五線譜上，就是 compose (作曲)。", "ex": "Mozart began to compose music at the age of five.", "grid": 1, "pos_idx": 10},
+            {"en": "invade", "ph": "/ɪnˈveɪd/", "pos": "v.", "cn": "入侵；侵略", "strategy": "字根 (in-入 + vade-走)", "mnemonic": "未經許可強行 in- (進) -vade (走) 別人領地，就是 invade (入侵)。", "ex": "The army invaded the neighboring country.", "grid": 1, "pos_idx": 11},
+            {"en": "expose", "ph": "/ɪkˈspoʊz/", "pos": "v.", "cn": "暴露；揭穿", "strategy": "字根 (ex-外 + pos-放)", "mnemonic": "把隱藏的東西向 ex- (外) -pos (放置)，就是 expose (暴露/揭穿)。", "ex": "The movie exposed the dark side of the city.", "grid": 1, "pos_idx": 12},
+            {"en": "disturb", "ph": "/dɪˈstɜːrb/", "pos": "v.", "cn": "打擾；使不安", "strategy": "字根 (turb-攪動/亂)", "mnemonic": "就像強大的 -turb- (渦輪) 攪亂了平靜水面，這就是 disturb (打擾)。", "ex": "Please do not disturb me while I am working.", "grid": 1, "pos_idx": 13},
+            {"en": "commit", "ph": "/kəˈmɪt/", "pos": "v.", "cn": "犯(罪)；委託", "strategy": "字根 (com-共 + mit-送)", "mnemonic": "把錯誤念頭 com- (一起) -mit (送出) 變為行動，就是 commit (犯罪)。", "ex": "He committed a serious crime and was sent to prison.", "grid": 1, "pos_idx": 14},
+            {"en": "disaster", "ph": "/dɪˈzæstər/", "pos": "n.", "cn": "災難；災害", "strategy": "字根 (dis-壞 + aster-星)", "mnemonic": "出現了 「壞的 -aster- (星星)」，預示著將有 disaster (災難)。", "ex": "The earthquake was a terrible disaster for the region.", "grid": 2, "pos_idx": 0},
+            {"en": "calorie", "ph": "/ˈkæləri/", "pos": "n.", "cn": "卡路里", "strategy": "諧音 (靠，熱哩)", "mnemonic": "「靠，」這食物也太 「熱哩」 吧，含有超高 calorie (卡路里)。", "ex": "How many calories are there in a chocolate bar?", "grid": 2, "pos_idx": 1},
+            {"en": "insult", "ph": "/ɪnˈsʌlt/", "pos": "v./n.", "cn": "侮辱", "strategy": "字根 (in-上 + sult-跳)", "mnemonic": "跳 (-sult) 到別人頭上 in- (進行) 攻擊，就是在 insult (侮辱) 他。", "ex": "Don't insult her intelligence by saying that.", "grid": 2, "pos_idx": 2},
+            {"en": "essential", "ph": "/ɪˈsenʃl/", "pos": "adj.", "cn": "必要的", "strategy": "諧音 (一扇鎖)", "mnemonic": "要進入祕寶庫，這 「一」 把 「扇」 形的 「鎖」 是必要的。", "ex": "Water is essential for all living things.", "grid": 2, "pos_idx": 3},
+            {"en": "expand", "ph": "/ɪkˈspænd/", "pos": "v.", "cn": "擴張", "strategy": "字根 (ex-外 + pand-展)", "mnemonic": "向 ex- (外) 伸 -pand- (展)，讓範圍不斷 expand (擴張)。", "ex": "The business is expanding into international markets.", "grid": 2, "pos_idx": 4},
+            {"en": "gender", "ph": "/ˈdʒendər/", "pos": "n.", "cn": "性別", "strategy": "諧音 (真的)", "mnemonic": "基因遺傳 「真的」 決定了你的 gender (性別)。", "ex": "The application form asks for your age and gender.", "grid": 2, "pos_idx": 5},
+            {"en": "concept", "ph": "/ˈkɑːnsept/", "pos": "n.", "cn": "概念；見解", "strategy": "字根 (con-共 + cept-抓)", "mnemonic": "把點子 con- (共同) -cept (抓取) 起來，就成了一個 concept (概念)。", "ex": "I don't understand the basic concept of this theory.", "grid": 2, "pos_idx": 6},
+            {"en": "issue", "ph": "/ˈɪʃuː/", "pos": "v./n.", "cn": "發行；議題", "strategy": "諧音 (一修)", "mnemonic": "這個棘手的 issue (議題) 需要 「一修」 再修才能發行。", "ex": "Climate change is a major global issue.", "grid": 2, "pos_idx": 7},
+            {"en": "urge", "ph": "/ɜːrdʒ/", "pos": "v./n.", "cn": "促使；衝動", "strategy": "諧音 (餓急)", "mnemonic": "肚子 「餓急」 了，就會產生一種想大吃的 urge (衝動)。", "ex": "I had a sudden urge to buy some ice cream.", "grid": 2, "pos_idx": 8},
+            {"en": "device", "ph": "/dɪˈvaɪs/", "pos": "n.", "cn": "儀器；裝置", "strategy": "諧音 (地外使)", "mnemonic": "這些 device (儀器) 是從 「地」 球 「外」 面帶回來 「使」 用的。", "ex": "A smartphone is a multifunctional electronic device.", "grid": 2, "pos_idx": 9},
+            {"en": "demand", "ph": "/dɪˈmænd/", "pos": "v./n.", "cn": "要求；需要", "strategy": "字根 (de-強 + mand-命)", "mnemonic": "長官下達加強版命令 (-mand)，強烈 demand (要求) 士兵進攻。", "ex": "The workers are demanding higher wages.", "grid": 2, "pos_idx": 10},
+            {"en": "establish", "ph": "/ɪˈstæblɪʃ/", "pos": "v.", "cn": "建立", "strategy": "字根 (e-使 + stab-立)", "mnemonic": "e- (使) 建築 -stab- (穩定站立) 的動作，就是 establish (建立)。", "ex": "The company was established in 1990.", "grid": 2, "pos_idx": 11},
+            {"en": "endanger", "ph": "/ɪnˈveɪndʒər/", "pos": "v.", "cn": "危害；危及", "strategy": "字根 (en-使 + danger)", "mnemonic": "en- (使) 進入 danger (危險) 的狀態，就是 endanger (危害)。", "ex": "Smoking endangers your health.", "grid": 2, "pos_idx": 12},
+            {"en": "neglect", "ph": "/nɪˈɡlekt/", "pos": "v./n.", "cn": "忽略", "strategy": "字根 (neg-不 + lect-選)", "mnemonic": "neg- (不) 去 -lect- (理會/挑選)，就是在 neglect (忽略) 它。", "ex": "He neglected his studies and failed the exam.", "grid": 2, "pos_idx": 13},
+            {"en": "infant", "ph": "/ˈinfənt/", "pos": "n.", "cn": "嬰兒", "strategy": "諧音 (嬰粉)", "mnemonic": "「嬰粉」(嬰兒奶粉) 是 infant (嬰兒) 唯一的食物。", "ex": "She has to look after her infant son.", "grid": 2, "pos_idx": 14}
+        ];
+
+        const gridImages = {
+            1: "https://raw.githubusercontent.com/terenceylhc/ltvoc/main/%E9%AB%98%E9%A0%BBU29g1.jpg",
+            2: "https://raw.githubusercontent.com/terenceylhc/ltvoc/main/%E9%AB%98%E9%A0%BBU29g2.jpg"
+        };
+
+        function createCard(data) {
+            const col = data.pos_idx % 4;
+            const row = Math.floor(data.pos_idx / 4);
+            
+            // 精確比例 4x4：每個單位位移為 100% / 3 = 33.333%
+            const posX = col * 33.3333;
+            const posY = row * 33.3333;
+
+            return `
+                <div class="card-container" onclick="flipCard(this, '${data.en}')">
+                    <div class="card-inner">
+                        <!-- 正面呈現 (Visual Cue Panel) -->
+                        <div class="card-front">
+                            <div class="image-box">
+                                <div class="sprite-img" style="
+                                    background-image: url('${gridImages[data.grid]}');
+                                    background-position: ${posX}% ${posY}%;
+                                "></div>
+                            </div>
+                            <div class="flex-1 flex flex-col justify-center items-center p-8">
+                                <h2 style="font-size: 2.5rem; font-weight: 900;" class="text-slate-900 mb-1 word-title">${data.en}</h2>
+                                <div class="flex items-center gap-4">
+                                    <span style="font-size: 1.1rem; color: #64748b;">${data.ph}</span>
+                                    <button class="btn-speak" onclick="event.stopPropagation(); speak('${data.en}')">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- 反面呈現 (Textual Content Panel) -->
+                        <div class="card-back">
+                            <h2 style="font-size: 3.2rem; font-weight: 900; color: #0f172a;" class="mb-2 leading-none word-title">${data.en}</h2>
+                            <div class="flex items-center gap-3 mb-4">
+                                <span class="pos-tag">${data.pos}</span>
+                                <span style="font-size: 1.6rem;" class="font-bold text-slate-800">${data.cn}</span>
+                            </div>
+                            
+                            <p class="text-slate-500 font-bold text-lg">💡 策略：${data.strategy}</p>
+                            
+                            <div class="mnemonic-box">
+                                ${data.mnemonic}
+                            </div>
+
+                            <div class="example-divider"></div>
+                            <p style="font-size: 1.25rem; color: #64748b;" class="italic text-center px-4 leading-relaxed">
+                                "${data.ex}"
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function flipCard(el, word) {
+            const isFlipped = el.classList.toggle('is-flipped');
+            if (isFlipped) {
+                // 功能邏輯：翻面時自動朗讀一次單字
+                speak(word);
+            }
+        }
+
+        function speak(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const msg = new SpeechSynthesisUtterance();
+                msg.text = text;
+                msg.lang = 'en-US';
+                msg.rate = 0.85;
+                window.speechSynthesis.speak(msg);
+            }
+        }
+
+        // 初始化網格
+        const grid = document.getElementById('vocabGrid');
+        vocabData.forEach(word => {
+            grid.innerHTML += createCard(word);
+        });
+    </script>
+</body>
+</html>
