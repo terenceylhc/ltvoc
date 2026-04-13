@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧠 互動單字記憶卡 - 高頻 U30</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
+
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #f8fafc;
+            color: #0f172a;
+        }
+
+        /* 記憶卡 3D 翻轉容器 */
+        .card-container {
+            perspective: 1500px;
+            min-height: 500px;
+        }
+
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+            cursor: pointer;
+        }
+
+        .card-inner.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 28px;
+            background: white;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .card-back {
+            transform: rotateY(180deg);
+            padding: 2rem;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        /* 影像無框化工程 */
+        .sprite-wrapper {
+            position: relative;
+            width: 100%;
+            padding-top: 56.25%; /* 16:9 Ratio */
+            overflow: hidden;
+            background-color: #eee;
+        }
+
+        .sprite-img {
+            position: absolute;
+            top: -3%; /* 稍微擠出邊界 */
+            left: -3%;
+            width: 106%; /* 配合 406% 的縮放位移 */
+            height: 106%;
+            background-size: 406%; 
+            background-repeat: no-repeat;
+            transition: transform 0.3s;
+        }
+
+        /* 文字排版 */
+        .word-title-front { font-size: 2.5rem; font-weight: 900; color: #0f172a; }
+        .word-title-back { font-size: 3.2rem; font-weight: 900; color: #0f172a; line-height: 1; }
+        .phonetic { font-size: 1.1rem; color: #64748b; }
+        .pos-tag { 
+            font-size: 1.1rem; 
+            background: #e2e8f0; 
+            padding: 2px 12px; 
+            border-radius: 6px; 
+            font-style: italic; 
+            font-weight: bold; 
+        }
+        .chinese-mean { font-size: 1.6rem; font-weight: 700; margin-left: 8px; }
+        .strategy-text { font-size: 1rem; color: #64748b; margin: 10px 0; }
+        .mnemonic-box {
+            background-color: #ff9800;
+            color: white;
+            font-weight: bold;
+            font-size: 1.3rem;
+            padding: 1rem;
+            border-radius: 20px;
+            width: 100%;
+            margin: 15px 0;
+        }
+        .example-divider { border-top: 1px dashed #cbd5e1; width: 100%; margin: 15px 0; }
+        .example-text { font-size: 1.25rem; color: #64748b; font-style: italic; }
+
+        /* 網格佈局 */
+        .main-grid {
+            display: grid;
+            gap: 2rem;
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        @media (min-width: 1024px) {
+            .main-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 1023px) {
+            .main-grid { grid-template-columns: 1fr; }
+        }
+
+        /* 朗讀按鈕樣式 */
+        .speaker-btn {
+            background: #f1f5f9;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 10px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .speaker-btn:hover { background: #e2e8f0; }
+    </style>
+</head>
+<body>
+
+    <header class="py-10 text-center">
+        <h1 class="text-4xl font-black text-slate-800 mb-2">🧠 互動單字記憶卡</h1>
+        <p class="text-slate-500">高頻 U30 | 視覺無框化學習系統</p>
+    </header>
+
+    <div id="card-list" class="main-grid">
+        <!-- 卡片將由 JS 生成 -->
+    </div>
+
+    <script>
+        const words = [
+  {
+    "en": "annual",
+    "ph": "/ˈænjuəl/",
+    "pos": "adj.",
+    "cn": "每年的；一年一次的",
+    "strategy": "字根 (ann-年)",
+    "mnemonic": "一年一度的 ann- (年) 終獎金，就是 annual。",
+    "ex": "The annual sales report will be released next Monday.",
+    "grid": 1,
+    "pos_idx": 0
+  },
+  {
+    "en": "differ",
+    "ph": "/ˈdɪfər/",
+    "pos": "v.",
+    "cn": "不同",
+    "strategy": "字根 (dif-分開 + fer-拿)",
+    "mnemonic": "拿著 (-fer) 東西往分開 (dif-) 的方向走，結果自然 differ。",
+    "ex": "The two brothers differ in their opinions on sports.",
+    "grid": 1,
+    "pos_idx": 1
+  },
+  {
+    "en": "gene",
+    "ph": "/dʒiːn/",
+    "pos": "n.",
+    "cn": "基因",
+    "strategy": "字根 (gen-產生)",
+    "mnemonic": "決定你如何產生 (gen-) 的生命種子就是 gene。",
+    "ex": "Scientists are studying how genes affect human health.",
+    "grid": 1,
+    "pos_idx": 2
+  },
+  {
+    "en": "infect",
+    "ph": "/ɪnˈfekt/",
+    "pos": "v.",
+    "cn": "感染",
+    "strategy": "字根 (in-入 + fect-搞鬼)",
+    "mnemonic": "細菌進入 (in-) 身體內部搞鬼 (-fect)，就是 infect。",
+    "ex": "The virus can infect both humans and animals.",
+    "grid": 1,
+    "pos_idx": 3
+  },
+  {
+    "en": "elementary",
+    "ph": "/ˌelɪˈmentri/",
+    "pos": "adj.",
+    "cn": "基本的",
+    "strategy": "字家族 (element 基礎零件)",
+    "mnemonic": "掌握最核心的 element (元素/零件)，就是最 elementary 的功夫。",
+    "ex": "He only has an elementary knowledge of English.",
+    "grid": 1,
+    "pos_idx": 4
+  },
+  {
+    "en": "regulation",
+    "ph": "/ˌreɡjuˈleɪʃn/",
+    "pos": "n.",
+    "cn": "規則",
+    "strategy": "字根 (reg-尺)",
+    "mnemonic": "用規矩的「尺」(reg-) 來規範，就是 regulation。",
+    "ex": "The safety regulations must be followed at all times.",
+    "grid": 1,
+    "pos_idx": 5
+  },
+  {
+    "en": "manufacture",
+    "ph": "/ˌmænjuˈfæktʃər/",
+    "pos": "v./n.",
+    "cn": "製造",
+    "strategy": "字根 (manu-手 + fact-做)",
+    "mnemonic": "原本用手 (manu-) 做出 (-fact) 產品，現在則是工廠規模 manufacture。",
+    "ex": "This factory manufactures parts for computers.",
+    "grid": 1,
+    "pos_idx": 6
+  },
+  {
+    "en": "convention",
+    "ph": "/kənˈvenʃn/",
+    "pos": "n.",
+    "cn": "會議；大會；慣例",
+    "strategy": "字根 (con-共同 + vent-來到)",
+    "mnemonic": "大家共同 (con-) 來到 (-vent) 這裡開大會，就是 convention。",
+    "ex": "The annual anime convention is held in July.",
+    "grid": 1,
+    "pos_idx": 7
+  },
+  {
+    "en": "intend",
+    "ph": "/ɪnˈtend/",
+    "pos": "v.",
+    "cn": "打算；預定",
+    "strategy": "字根 (in-朝向 + tend-伸展)",
+    "mnemonic": "心思朝向 (in-) 目標伸展 (-tend)，就是你的 intend。",
+    "ex": "I intend to travel abroad after graduation.",
+    "grid": 1,
+    "pos_idx": 8
+  },
+  {
+    "en": "interfere",
+    "ph": "/ˌɪntərˈfɪr/",
+    "pos": "v.",
+    "cn": "介入；干涉",
+    "strategy": "字根 (inter-中間 + fere-打擊)",
+    "mnemonic": "在別人中間 (inter-) 橫插一腳擊打 (-fere)，就是 interfere。",
+    "ex": "Don't interfere in things that don't concern you.",
+    "grid": 1,
+    "pos_idx": 9
+  },
+  {
+    "en": "luxury",
+    "ph": "/ˈlʌkʃəri/",
+    "pos": "n.",
+    "cn": "奢侈；奢侈品",
+    "strategy": "字根 (lux-光/亮)",
+    "mnemonic": "閃閃發亮 (lux-) 到令人睜不開眼的昂貴物品，就是 luxury。",
+    "ex": "They lived in luxury after winning the lottery.",
+    "grid": 1,
+    "pos_idx": 10
+  },
+  {
+    "en": "campaign",
+    "ph": "/kæmˈpeɪn/",
+    "pos": "n./v.",
+    "cn": "活動；進行活動",
+    "strategy": "字根 (camp 平原)",
+    "mnemonic": "在廣大的平原 (camp) 發動大規模宣傳活動，就是 campaign。",
+    "ex": "The candidate is busy with his election campaign.",
+    "grid": 1,
+    "pos_idx": 11
+  },
+  {
+    "en": "facility",
+    "ph": "/fəˈsɪləti/",
+    "pos": "n.",
+    "cn": "設施",
+    "strategy": "字根 (fac-使容易)",
+    "mnemonic": "為了讓生活變得容易 (fac-) 而建造的設備，就是 facility。",
+    "ex": "The hotel has excellent sports facilities.",
+    "grid": 1,
+    "pos_idx": 12
+  },
+  {
+    "en": "emerge",
+    "ph": "/iˈmɜːrdʒ/",
+    "pos": "v.",
+    "cn": "浮現；顯露",
+    "strategy": "字根 (e-向外 + merge-浸入)",
+    "mnemonic": "從原本浸入的地方向外 (e-) 冒出來，就是 emerge。",
+    "ex": "The sun emerged from behind the clouds.",
+    "grid": 1,
+    "pos_idx": 13
+  },
+  {
+    "en": "interact",
+    "ph": "/ˌɪntərˈækt/",
+    "pos": "v.",
+    "cn": "互動",
+    "strategy": "字根 (inter-互相 + act-行動)",
+    "mnemonic": "在彼此之 (inter-) 間進行動作 (-act)，就是 interact。",
+    "ex": "It's interesting to see how the two species interact.",
+    "grid": 1,
+    "pos_idx": 14
+  },
+  {
+    "en": "digital",
+    "ph": "/ˈdɪdʒɪtl/",
+    "pos": "adj.",
+    "cn": "數位的",
+    "strategy": "諧音 (dig it 喜歡它 / digit 手指)",
+    "mnemonic": "大家都 dig it (愛用) 用 digit (手指) 觸控的 digital 產品。",
+    "ex": "We live in a digital age dominated by computers.",
+    "grid": 2,
+    "pos_idx": 0
+  },
+  {
+    "en": "invest",
+    "ph": "/ɪnˈvest/",
+    "pos": "v.",
+    "cn": "投入；投資",
+    "strategy": "字根 (in-入 + vest-衣)",
+    "mnemonic": "把金幣投入 (in-) 神奇的背心 (-vest) 中，就是 invest。",
+    "ex": "It's wise to invest your money in a good business.",
+    "grid": 2,
+    "pos_idx": 1
+  },
+  {
+    "en": "margin",
+    "ph": "/ˈmɑːrdʒɪn/",
+    "pos": "n.",
+    "cn": "邊緣；利潤",
+    "strategy": "諧音 (馬進)",
+    "mnemonic": "「馬進」入了草地的 margin (邊緣)，發現邊緣利潤最大。",
+    "ex": "Write your notes in the margin of the paper.",
+    "grid": 2,
+    "pos_idx": 2
+  },
+  {
+    "en": "transform",
+    "ph": "/trænsˈfɔːrm/",
+    "pos": "v.",
+    "cn": "轉變",
+    "strategy": "字根 (trans-改變 + form-形狀)",
+    "mnemonic": "改變 (trans-) 形狀 (-form)，就能 transform (轉變) 命運。",
+    "ex": "The small town was transformed into a big city.",
+    "grid": 2,
+    "pos_idx": 3
+  },
+  {
+    "en": "dignity",
+    "ph": "/ˈdɪɡnəti/",
+    "pos": "n.",
+    "cn": "尊嚴",
+    "strategy": "諧音 (挺你體)",
+    "mnemonic": "為了 dignity (尊嚴)，你要「挺起你的身體」，絕不低頭。",
+    "ex": "Everyone should be treated with respect and dignity.",
+    "grid": 2,
+    "pos_idx": 4
+  },
+  {
+    "en": "contest",
+    "ph": "/ˈkɑːntest/",
+    "pos": "n.",
+    "cn": "比賽",
+    "strategy": "字根 (con-共 + test-測)",
+    "mnemonic": "大家共同 (con-) 接受測試 (-test)，看誰能贏得 contest。",
+    "ex": "He won first prize in the singing contest.",
+    "grid": 2,
+    "pos_idx": 5
+  },
+  {
+    "en": "construct",
+    "ph": "/kənˈstrʌkt/",
+    "pos": "v.",
+    "cn": "建造",
+    "strategy": "字根 (con-共 + struct-堆)",
+    "mnemonic": "把材料共同 (con-) 堆疊 (-struct) 起來，就是在 construct。",
+    "ex": "The company is constructing a new office building.",
+    "grid": 2,
+    "pos_idx": 6
+  },
+  {
+    "en": "grateful",
+    "ph": "/ˈɡreɪtfl/",
+    "pos": "adj.",
+    "cn": "感謝的",
+    "strategy": "拆解 (Great 偉大 + Full 充滿)",
+    "mnemonic": "心中充滿 (full) 了美好 (great) 的謝意，就是 grateful。",
+    "ex": "I am extremely grateful for your help.",
+    "grid": 2,
+    "pos_idx": 7
+  },
+  {
+    "en": "virtue",
+    "ph": "/ˈvɜːrtʃuː/",
+    "pos": "n.",
+    "cn": "美德",
+    "strategy": "諧音 (為初)",
+    "mnemonic": "莫忘「為初」善良的心，守住最初的 virtue (美德)。",
+    "ex": "Patience is a virtue that everyone should have.",
+    "grid": 2,
+    "pos_idx": 8
+  },
+  {
+    "en": "rural",
+    "ph": "/ˈrʊrəl/",
+    "pos": "adj.",
+    "cn": "鄉村的",
+    "strategy": "諧音 (路柔)",
+    "mnemonic": "rural (鄉村) 的「路很柔」軟，都是泥土路。",
+    "ex": "I prefer the quiet life in rural areas.",
+    "grid": 2,
+    "pos_idx": 9
+  },
+  {
+    "en": "accuse",
+    "ph": "/əˈkjuːz/",
+    "pos": "v.",
+    "cn": "控告",
+    "strategy": "諧音 (阿Q死)",
+    "mnemonic": "「阿Q死」了，大家都在 accuse (控告) 那個可疑的兇手。",
+    "ex": "She was accused of stealing the necklace.",
+    "grid": 2,
+    "pos_idx": 10
+  },
+  {
+    "en": "cherish",
+    "ph": "/ˈtʃerɪʃ/",
+    "pos": "v.",
+    "cn": "珍愛",
+    "strategy": "諧音 (櫻桃 Cherry)",
+    "mnemonic": "手心捧著紅「櫻桃」，細心 cherish (珍愛) 它。",
+    "ex": "We should cherish the time we spend with our family.",
+    "grid": 2,
+    "pos_idx": 11
+  },
+  {
+    "en": "protest",
+    "ph": "/ˈproʊtest/",
+    "pos": "v./n.",
+    "cn": "抗議",
+    "strategy": "字根 (pro-前 + test-測)",
+    "mnemonic": "站到最前面向大眾見證不公，就是 protest。",
+    "ex": "Thousands of people took part in the protest.",
+    "grid": 2,
+    "pos_idx": 12
+  },
+  {
+    "en": "refund",
+    "ph": "/ˈriːfʌnd/",
+    "pos": "v./n.",
+    "cn": "退款",
+    "strategy": "字根 (re-回 + fund-資)",
+    "mnemonic": "讓資金 (-fund) 再次回到手中，就是 refund。",
+    "ex": "The store agreed to give me a full refund.",
+    "grid": 2,
+    "pos_idx": 13
+  },
+  {
+    "en": "fantastic",
+    "ph": "/fænˈtæstɪk/",
+    "pos": "adj.",
+    "cn": "奇幻的；極好的",
+    "strategy": "拆解 (Fan 粉絲 + Taste 品味)",
+    "mnemonic": "讓粉絲都覺得很有品味，這表演真是 fantastic。",
+    "ex": "We had a fantastic holiday in Japan.",
+    "grid": 2,
+    "pos_idx": 14
+  }
+];
+
+        const imgUrls = {
+            1: 'https://raw.githubusercontent.com/terenceylhc/ltvoc/main/%E9%AB%98%E9%A0%BBU30g1.jpg',
+            2: 'https://raw.githubusercontent.com/terenceylhc/ltvoc/main/%E9%AB%98%E9%A0%BBU30g2.jpg'
+        };
+
+        function speak(text) {
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'en-US';
+            utterance.rate = 0.9;
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function createCard(wordData) {
+            const container = document.createElement('div');
+            container.className = 'card-container';
+
+            // 計算背景位置 (4x4 網格)
+            const row = Math.floor(wordData.pos_idx / 4);
+            const col = wordData.pos_idx % 4;
+            // 由於縮放是 406%，原本 25% 的區間會有些微偏移，使用 33.33% 作為 background-position 的 0, 1, 2, 3 階
+            const posX = (col * 100) / 3;
+            const posY = (row * 100) / 3;
+
+            const html = `
+                <div class="card-inner" onclick="this.classList.toggle('flipped'); if(this.classList.contains('flipped')) speak('${wordData.en}')">
+                    <!-- 正面 -->
+                    <div class="card-front">
+                        <div class="sprite-wrapper">
+                            <div class="sprite-img" style="background-image: url('${imgUrls[wordData.grid]}'); background-position: ${posX}% ${posY}%;"></div>
+                        </div>
+                        <div class="flex-1 flex flex-col justify-center items-center p-6">
+                            <div class="word-title-front">${wordData.en}</div>
+                            <div class="flex items-center mt-2">
+                                <span class="phonetic">${wordData.ph}</span>
+                                <div class="speaker-btn" onclick="event.stopPropagation(); speak('${wordData.en}')">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 反面 -->
+                    <div class="card-back">
+                        <div class="word-title-back">${wordData.en}</div>
+                        <div class="flex items-center my-3">
+                            <span class="pos-tag">${wordData.pos}</span>
+                            <span class="chinese-mean">${wordData.cn}</span>
+                        </div>
+                        <div class="strategy-text">💡 策略：${wordData.strategy}</div>
+                        <div class="mnemonic-box">
+                            ${wordData.mnemonic}
+                        </div>
+                        <div class="example-divider"></div>
+                        <div class="example-text">
+                            "${wordData.ex}"
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.innerHTML = html;
+            return container;
+        }
+
+        const cardList = document.getElementById('card-list');
+        words.forEach(word => {
+            cardList.appendChild(createCard(word));
+        });
+    </script>
+</body>
+</html>
