@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🧠 互動單字記憶卡 - 高頻 U31</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts Inter & Noto Sans TC -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Inter', 'Noto Sans TC', sans-serif;
+      background-color: #f1f5f9;
+      color: #0f172a;
+    }
+
+    /* 3D Card Container & Flip Logic */
+    .card-perspective {
+      perspective: 1200px;
+    }
+
+    .card-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      transform-style: preserve-3d;
+    }
+
+    .card-inner.is-flipped {
+      transform: rotateY(180deg);
+    }
+
+    .card-front, .card-back {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      border-radius: 28px;
+      background-color: #ffffff;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+      border: 1px solid rgba(226, 232, 240, 0.8);
+      overflow: hidden;
+    }
+
+    .card-back {
+      transform: rotateY(180deg);
+    }
+
+    /* Sprite Cropping Algorithm: 4x4 Grid with 406% Safe Zone Cropping */
+    .sprite-img {
+      width: 100%;
+      height: 100%;
+      background-size: 406% 406%;
+      background-repeat: no-repeat;
+      transition: transform 0.3s ease;
+    }
+
+    .card-container:hover .sprite-img {
+      transform: scale(1.03);
+    }
+
+    /* Glassmorphism Controls Header */
+    .glass-header {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col pb-16">
+
+  <!-- Top Navigation / Toolbar Header -->
+  <header class="sticky top-0 z-50 glass-header border-b border-slate-200/80 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
+      
+      <!-- Title & Word Count Badge -->
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-500 flex items-center justify-center text-white text-xl shadow-md">
+          🧠
+        </div>
+        <div>
+          <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight" id="app-title">🧠 互動單字記憶卡</h1>
+          <p class="text-xs font-semibold text-slate-500">高頻 U31 互動單字記憶卡</p>
+        </div>
+      </div>
+
+      <!-- Action Buttons & Search Bar -->
+      <div class="flex flex-wrap items-center gap-2 sm:gap-3 w-full md:w-auto justify-end">
+        <!-- Search Input -->
+        <div class="relative flex-1 sm:flex-none sm:w-64">
+          <i class="fa-solid fa-magnifying-glass absolute left-3 top.1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+          <input type="text" id="search-input" placeholder="搜尋英文單字或中文..." 
+                 class="w-full pl-9 pr-4 py-2 bg-slate-100/80 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all">
+        </div>
+
+        <!-- Flip All Toggle Button -->
+        <button id="btn-flip-all" onclick="toggleFlipAll()" 
+                class="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-bold rounded-xl shadow-sm transition-all flex items-center space-x-2">
+          <i class="fa-solid fa-rotate text-amber-400"></i>
+          <span id="flip-all-text">全部翻面</span>
+        </button>
+
+        <!-- Auto Play Voice Switch -->
+        <button id="btn-sound-toggle" onclick="toggleAutoSpeech()" 
+                class="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs sm:text-sm font-bold rounded-xl shadow-sm transition-all flex items-center space-x-2">
+          <i class="fa-solid fa-volume-high" id="sound-icon"></i>
+          <span id="sound-status-text">翻面朗讀: 開</span>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 flex-1 w-full">
+    
+    <!-- Status & Info Ribbon -->
+    <div class="mb-6 flex items-center justify-between text-xs sm:text-sm text-slate-500 font-semibold px-2">
+      <div class="flex items-center space-x-2">
+        <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span>全部單字：<strong class="text-slate-900 font-extrabold text-base" id="total-count">30</strong> 字</span>
+      </div>
+      <div class="text-slate-400 hidden sm:block">
+        💡 提示：點擊卡片任何空白處可切換正/反面，點擊 🔊 可個別發音
+      </div>
+    </div>
+
+    <!-- Mandatory Layout: Desktop fixed 2 columns, Mobile fixed 1 column -->
+    <div id="cards-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 items-stretch">
+      <!-- Cards rendered via JavaScript -->
+    </div>
+
+  </main>
+
+  <footer class="mt-12 text-center text-xs font-semibold text-slate-400 py-6 border-t border-slate-200">
+    <p>精確比例字卡與視覺無框化系統 • 雙組 4x4 圖像智慧對應 (Grid 1 & Grid 2)</p>
+  </footer>
+
+  <script>
+    /* ==========================================================================
+       DATA STORE: High Frequency U31 Vocabulary Set (30 items: 15 Grid 1, 15 Grid 2)
+       ========================================================================== */
+    const rawImageG1 = "https://raw.githubusercontent.com/terenceylhc/ltvoc/main/%E9%AB%98%E9%A0%BBU31g1.jpg";
+    const rawImageG2 = "https://raw.githubusercontent.com/terenceylhc/ltvoc/main/%E9%AB%98%E9%A0%BBU31g2.jpg";
+
+    const wordList = [
+      {
+        "en": "workplace",
+        "ph": "/'wɜːkpleɪs/",
+        "pos": "n.",
+        "cn": "工作場所",
+        "strategy": "圖像 (work 工作 + place 地點)",
+        "mnemonic": "上班族在繁忙的工作場所裡瘋狂打電腦。",
+        "ex": "We need to keep our workplace clean and organized.",
+        "grid": 1,
+        "pos_idx": 0
+      },
+      {
+        "en": "physical",
+        "ph": "/'fɪzɪkl/",
+        "pos": "adj.",
+        "cn": "身體的；物質的",
+        "strategy": "諧音 (飛機扣)",
+        "mnemonic": "把飛機扣在身上做身體的極限訓練。",
+        "ex": "Regular physical exercise is good for your health.",
+        "grid": 1,
+        "pos_idx": 1
+      },
+      {
+        "en": "exhausted",
+        "ph": "/ɪɡ'zɔːstɪd/",
+        "pos": "adj.",
+        "cn": "精疲力盡的",
+        "strategy": "諧音 (一個做的)",
+        "mnemonic": "這所有繁重工作都是我一個做的，真是精疲力盡！",
+        "ex": "After running the marathon, she felt completely exhausted.",
+        "grid": 1,
+        "pos_idx": 2
+      },
+      {
+        "en": "delicate",
+        "ph": "/'delɪkət/",
+        "pos": "adj.",
+        "cn": "易碎的；精美的；美味的",
+        "strategy": "諧音 (得理客)",
+        "mnemonic": "這位得理不繞人的客人，拿著非常精美且易碎的水晶杯發脾氣。",
+        "ex": "The crystal vase is very delicate, so handle it with care.",
+        "grid": 1,
+        "pos_idx": 3
+      },
+      {
+        "en": "incredible",
+        "ph": "/ɪn'kredəbl/",
+        "pos": "adj.",
+        "cn": "難以置信的",
+        "strategy": "字根 (in 不 + cred 相信 + ible 能夠)",
+        "mnemonic": "眼前發生的魔術景象令人無法相信，真是難以置信！",
+        "ex": "The view from the top of the mountain was incredible.",
+        "grid": 1,
+        "pos_idx": 4
+      },
+      {
+        "en": "artificial",
+        "ph": "/ˌɑːtɪ'fɪʃl/",
+        "pos": "adj.",
+        "cn": "人工的；人造的",
+        "strategy": "字根 (arti 技巧 + fic 做 + ial 的)",
+        "mnemonic": "用高超技巧做出來的人造機器人手臂。",
+        "ex": "This juice contains no artificial flavors or colors.",
+        "grid": 1,
+        "pos_idx": 5
+      },
+      {
+        "en": "agency",
+        "ph": "/'eɪdʒənsi/",
+        "pos": "n.",
+        "cn": "代理機構；仲介",
+        "strategy": "諧音 (愛進去)",
+        "mnemonic": "這家房屋仲介代理機構服務超好，大家都愛進去。",
+        "ex": "He works for a top advertising agency in the city.",
+        "grid": 1,
+        "pos_idx": 6
+      },
+      {
+        "en": "translate",
+        "ph": "/trænz'leɪt/",
+        "pos": "v.",
+        "cn": "翻譯",
+        "strategy": "字根 (trans 跨越 + late 帶/拉)",
+        "mnemonic": "把文字跨越語言界線翻譯成另一種語言。",
+        "ex": "Can you help me translate this letter into English?",
+        "grid": 1,
+        "pos_idx": 7
+      },
+      {
+        "en": "comic",
+        "ph": "/'kɒmɪk/",
+        "pos": "adj./n.",
+        "cn": "好笑的；喜劇的；漫畫雜誌",
+        "strategy": "圖像 (經典美式 comic 漫畫圖案)",
+        "mnemonic": "小丑看著好笑的喜劇漫畫狂笑不止。",
+        "ex": "My brother loves reading comic books on weekends.",
+        "grid": 1,
+        "pos_idx": 8
+      },
+      {
+        "en": "numerous",
+        "ph": "/'njuːmərəs/",
+        "pos": "adj.",
+        "cn": "很多的",
+        "strategy": "字根 (numer 數字 + ous 多的)",
+        "mnemonic": "數字多到數不清，代表數量很多的。",
+        "ex": "There are numerous reasons why people love traveling.",
+        "grid": 1,
+        "pos_idx": 9
+      },
+      {
+        "en": "aspect",
+        "ph": "/'æspekt/",
+        "pos": "n.",
+        "cn": "方面；觀點",
+        "strategy": "諧音 (愛死別)",
+        "mnemonic": "從各個方面與觀點來分析，他都愛死別人的創意了！",
+        "ex": "We must consider every aspect of the problem before deciding.",
+        "grid": 1,
+        "pos_idx": 10
+      },
+      {
+        "en": "tolerate",
+        "ph": "/'tɒləreɪt/",
+        "pos": "v.",
+        "cn": "忍受；容忍",
+        "strategy": "諧音 (套了淚)",
+        "mnemonic": "在吵鬧車陣中被套了頭套流著淚，依然默默忍受耳邊巨大的喇叭吵鬧聲。",
+        "ex": "I cannot tolerate such loud noise while studying.",
+        "grid": 1,
+        "pos_idx": 11
+      },
+      {
+        "en": "obtain",
+        "ph": "/əb'teɪn/",
+        "pos": "v.",
+        "cn": "獲得",
+        "strategy": "諧音 (阿伯挺)",
+        "mnemonic": "有阿伯挺身相助，我終於獲得了稀有寶物。",
+        "ex": "He managed to obtain a copy of the rare book.",
+        "grid": 1,
+        "pos_idx": 12
+      },
+      {
+        "en": "battery",
+        "ph": "/'bætəri/",
+        "pos": "n.",
+        "cn": "電池",
+        "strategy": "諧音 (白特理)",
+        "mnemonic": "小白特別喜歡清理電池，讓電池隨時滿電。",
+        "ex": "My phone's battery is low, so I need a charger.",
+        "grid": 1,
+        "pos_idx": 13
+      },
+      {
+        "en": "enlarge",
+        "ph": "/ɪn'lɑːdʒ/",
+        "pos": "v.",
+        "cn": "擴大；放大",
+        "strategy": "字根 (en 使 + large 巨大的)",
+        "mnemonic": "按下機器按鈕，使物品變大，將圖像放大。",
+        "ex": "The photographer will enlarge this picture for the exhibition.",
+        "grid": 1,
+        "pos_idx": 14
+      },
+      {
+        "en": "analyze",
+        "ph": "/'ænəlaɪz/",
+        "pos": "v.",
+        "cn": "分析",
+        "strategy": "諧音 (按那來)",
+        "mnemonic": "按儀表板上的按那來（按鈕），電腦就會自動分析複雜的數據資料。",
+        "ex": "Scientists need to analyze the data carefully before making a conclusion.",
+        "grid": 2,
+        "pos_idx": 0
+      },
+      {
+        "en": "cabinet",
+        "ph": "/'kæbɪnət/",
+        "pos": "n.",
+        "cn": "櫥櫃；內閣",
+        "strategy": "諧音 (開餅乾)",
+        "mnemonic": "打開廚房的木質櫥櫃，開餅乾盒來吃。",
+        "ex": "She put the clean glasses back into the kitchen cabinet.",
+        "grid": 2,
+        "pos_idx": 1
+      },
+      {
+        "en": "absorb",
+        "ph": "/əb'zɔːb/",
+        "pos": "v.",
+        "cn": "吸收知識；吸收氣體；吸收光；吸收聲音",
+        "strategy": "諧音 (阿伯受)",
+        "mnemonic": "阿伯受到書本智慧的感召，瘋狂地吸收知識。",
+        "ex": "Sponges can absorb a large amount of water quickly.",
+        "grid": 2,
+        "pos_idx": 2
+      },
+      {
+        "en": "loyal",
+        "ph": "/'lɔɪəl/",
+        "pos": "adj.",
+        "cn": "忠誠的；忠心的",
+        "strategy": "諧音 (老友)",
+        "mnemonic": "這隻老友般的大狗非常忠誠，始終守護在主人身邊。",
+        "ex": "Dogs are known to be very loyal companions to humans.",
+        "grid": 2,
+        "pos_idx": 3
+      },
+      {
+        "en": "reward",
+        "ph": "/rɪ'wɔːd/",
+        "pos": "v./n.",
+        "cn": "獎賞；報償",
+        "strategy": "諧音 (禮物)",
+        "mnemonic": "完成任務後，國王頒發了豐厚的金幣禮物作為獎賞。",
+        "ex": "He received a big reward for finding the lost wallet.",
+        "grid": 2,
+        "pos_idx": 4
+      },
+      {
+        "en": "rescue",
+        "ph": "/'reskjuː/",
+        "pos": "v./n.",
+        "cn": "拯救；救援",
+        "strategy": "諧音 (熱死Q)",
+        "mnemonic": "火場裡快熱死QQ小熊了，英勇的消防員趕緊衝進去拯救牠。",
+        "ex": "The firefighters managed to rescue the cat from the tall tree.",
+        "grid": 2,
+        "pos_idx": 5
+      },
+      {
+        "en": "boast",
+        "ph": "/bəʊst/",
+        "pos": "v.",
+        "cn": "誇耀；吹噓",
+        "strategy": "諧音 (抱死它)",
+        "mnemonic": "他高高抱死它不放，到處向大家誇耀自己拿到了第一名獎盃。",
+        "ex": "He likes to boast about his high scores in video games.",
+        "grid": 2,
+        "pos_idx": 6
+      },
+      {
+        "en": "retire",
+        "ph": "/rɪ'taɪə(r)/",
+        "pos": "v.",
+        "cn": "退休",
+        "strategy": "字根 (re 往後 + tire 提走/引退)",
+        "mnemonic": "把工作往後放，開心享受退休生活。",
+        "ex": "My grandfather plans to retire from his job next year.",
+        "grid": 2,
+        "pos_idx": 7
+      },
+      {
+        "en": "ruin",
+        "ph": "/'ruːɪn/",
+        "pos": "v./n.",
+        "cn": "毀壞；廢墟",
+        "strategy": "諧音 (如陰)",
+        "mnemonic": "這座被暴風雨毀壞的城堡如陰森的廢墟一樣令人膽寒。",
+        "ex": "The rain completely ruined our picnic plans.",
+        "grid": 2,
+        "pos_idx": 8
+      },
+      {
+        "en": "defeat",
+        "ph": "/dɪ'fiːt/",
+        "pos": "v./n.",
+        "cn": "失敗；擊敗",
+        "strategy": "諧音 (底飛踢)",
+        "mnemonic": "英雄用了一招底飛踢，將反派徹底擊敗使其面臨失敗。",
+        "ex": "Our football team managed to defeat the champion.",
+        "grid": 2,
+        "pos_idx": 9
+      },
+      {
+        "en": "shift",
+        "ph": "/ʃɪft/",
+        "pos": "v./n.",
+        "cn": "轉移；變換；輪班",
+        "strategy": "圖像 (鍵盤上的 Shift 鍵，代表切換/轉移)",
+        "mnemonic": "按下切換鍵，工作人員瞬間轉移方向，進入下一組輪班。",
+        "ex": "He works the night shift at the convenience store.",
+        "grid": 2,
+        "pos_idx": 10
+      },
+      {
+        "en": "spare",
+        "ph": "/speə(r)/",
+        "pos": "v./adj.",
+        "cn": "騰出；備用的；空閒的",
+        "strategy": "諧音 (四百)",
+        "mnemonic": "花了四百塊買這顆備用的輪胎，特地在後車廂騰出空間放它。",
+        "ex": "Do you have a spare pen that I can borrow?",
+        "grid": 2,
+        "pos_idx": 11
+      },
+      {
+        "en": "vast",
+        "ph": "/vɑːst/",
+        "pos": "adj.",
+        "cn": "廣大的；巨大的",
+        "strategy": "諧音 (瓦斯)",
+        "mnemonic": "瓦斯桶氣體外洩，瞬間充飽膨脹成廣大的巨型熱氣球遮蔽天空！",
+        "ex": "The desert covers a vast area of land.",
+        "grid": 2,
+        "pos_idx": 12
+      },
+      {
+        "en": "shelter",
+        "ph": "/'ʃeltə(r)/",
+        "pos": "v./n.",
+        "cn": "庇護；遮蔽",
+        "strategy": "諧音 (雪特)",
+        "mnemonic": "突然下起雪特大，大家趕快躲進庇護所尋求遮蔽。",
+        "ex": "They built a wooden shelter to protect themselves from the rain.",
+        "grid": 2,
+        "pos_idx": 13
+      },
+      {
+        "en": "enormous",
+        "ph": "/ɪ'nɔːməs/",
+        "pos": "adj.",
+        "cn": "極大的",
+        "strategy": "字根 (e 出 + norm 規範 + ous 多的 -> 超出常規的大)",
+        "mnemonic": "這隻怪物超出了一般尺寸的規範，體型極大的！",
+        "ex": "An enormous elephant blocked the narrow path.",
+        "grid": 2,
+        "pos_idx": 14
+      }
+    ];
+
+    let isAutoSpeechEnabled = true;
+    let isAllFlipped = false;
+
+    // Web Speech API Initialization
+    const synth = window.speechSynthesis;
+
+    function speakWord(text, event) {
+      if (event) {
+        event.stopPropagation(); // Stop card flip on button click
+      }
+      if (!synth) return;
+      synth.cancel(); // Cancel any ongoing speech
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'en-US';
+      utterance.rate = 0.9;
+      synth.speak(utterance);
+    }
+
+    /* Calculate 4x4 Sprite Offsets for 406% Safe Zone Overflow Cropping */
+    function getSpritePosition(posIdx) {
+      const col = posIdx % 4;
+      const row = Math.floor(posIdx / 4);
+      // Offset percentages based on 4 columns x 4 rows
+      const xPercent = col * (100 / 3);
+      const yPercent = row * (100 / 3);
+      return `${xPercent}% ${yPercent}%`;
+    }
+
+    function createCardElement(item, index) {
+      const bgImage = item.grid === 1 ? rawImageG1 : rawImageG2;
+      const bgPosition = getSpritePosition(item.pos_idx);
+
+      const cardWrapper = document.createElement('div');
+      cardWrapper.className = 'card-perspective w-full min-h-[460px] h-full cursor-pointer group';
+      cardWrapper.setAttribute('data-index', index);
+
+      cardWrapper.innerHTML = `
+        <div class="card-inner shadow-sm rounded-[28px] h-full transition-transform duration-300">
+          
+          <!-- ==================== 正面呈現 (Visual Cue Panel) ==================== -->
+          <div class="card-front flex flex-col justify-between p-0 overflow-hidden border border-slate-100">
+            
+            <!-- 影像區: 16:9 比例, 406% 溢位裁切, Safe Zone Cropping -->
+            <div class="relative w-full aspect-video overflow-hidden rounded-t-[28px] bg-slate-100">
+              <div class="sprite-img" style="background-image: url('${bgImage}'); background-position: ${bgPosition};"></div>
+              
+              <!-- Badge: Word Index -->
+              <div class="absolute top-3 left-3 bg-slate-900/70 backdrop-blur-md text-white text-xs font-bold px-2.5 py-1 rounded-full border border-white/20">
+                #${index + 1}
+              </div>
+            </div>
+
+            <!-- 文字區 (垂直置中) -->
+            <div class="flex-1 flex flex-col items-center justify-center p-6 text-center">
+              
+              <!-- 單字: 2.5rem, font-weight: 900, color: #0f172a -->
+              <h2 class="text-[2.5rem] font-[900] text-[#0f172a] leading-tight tracking-tight hover:text-amber-600 transition-colors">
+                ${item.en}
+              </h2>
+
+              <!-- 音標與發音: 1.1rem #64748b 緊鄰 🔊 按鈕 -->
+              <div class="flex items-center space-x-2 mt-2">
+                <span class="text-[1.1rem] font-medium text-[#64748b] tracking-wide">
+                  ${item.ph}
+                </span>
+                <button onclick="speakWord('${item.en}', event)" 
+                        title="點擊發音"
+                        class="w-9 h-9 rounded-full bg-amber-100 hover:bg-amber-200 text-amber-700 flex items-center justify-center transition-all transform active:scale-95 shadow-sm">
+                  <i class="fa-solid fa-volume-high text-sm"></i>
+                </button>
+              </div>
+
+            </div>
+
+            <!-- 底部翻頁提醒 -->
+            <div class="py-3 px-6 bg-slate-50 border-t border-slate-100 text-center text-xs font-bold text-slate-400 group-hover:text-amber-500 transition-colors flex items-center justify-center space-x-1">
+              <span>點擊查看詳細口訣與解說</span>
+              <i class="fa-solid fa-chevron-right text-[10px]"></i>
+            </div>
+
+          </div>
+
+          <!-- ==================== 反面呈現 (Textual Content Panel) ==================== -->
+          <div class="card-back flex flex-col justify-center items-center p-6 text-center bg-white border border-slate-100">
+            
+            <div class="w-full flex-1 flex flex-col justify-center items-center space-y-3.5">
+              
+              <!-- 1. 單字: 3.2rem, font-weight: 900, color: #0f172a -->
+              <h2 class="text-[3.2rem] font-[900] text-[#0f172a] leading-none tracking-tight">
+                ${item.en}
+              </h2>
+
+              <!-- 2. 詞性標籤與中文意義 -->
+              <div class="flex items-center justify-center flex-wrap gap-2">
+                <!-- 詞性標籤: 1.1rem, 背景色 #e2e8f0, 斜粗體 -->
+                <span class="text-[1.1rem] font-bold italic bg-[#e2e8f0] text-slate-700 px-3 py-0.5 rounded-lg">
+                  ${item.pos}
+                </span>
+                <!-- 中文意義: 1.6rem, 緊鄰詞性標籤 -->
+                <span class="text-[1.6rem] font-extrabold text-slate-800">
+                  ${item.cn}
+                </span>
+              </div>
+
+              <!-- 3. 策略提示: 💡 策略：[內容] -->
+              <div class="text-[1.05rem] font-bold text-slate-600 bg-slate-50 px-4 py-1.5 rounded-xl border border-slate-200/60">
+                💡 策略：${item.strategy}
+              </div>
+
+              <!-- 4. 記憶口訣方塊: 圓角 20px, 背景色 #ff9800, 文字白色粗體, 字級 1.3rem -->
+              <div class="w-full bg-[#ff9800] text-white font-bold text-[1.3rem] rounded-[20px] p-4 shadow-md leading-snug tracking-wide">
+                ${item.mnemonic}
+              </div>
+
+              <!-- 5. 例句區: 上方灰色細虛線, 1.25rem 灰色斜體 -->
+              <div class="w-full pt-3 border-t border-dashed border-slate-300">
+                <p class="text-[1.25rem] italic text-slate-500 font-medium leading-relaxed">
+                  "${item.ex}"
+                </p>
+              </div>
+
+            </div>
+
+            <!-- 反面底部切換提示 -->
+            <div class="mt-2 text-xs font-bold text-slate-400 flex items-center justify-center space-x-1">
+              <i class="fa-solid fa-arrow-rotate-left"></i>
+              <span>點擊翻回正面</span>
+            </div>
+
+          </div>
+
+        </div>
+      `;
+
+      // Click event for card flip
+      cardWrapper.addEventListener('click', (e) => {
+        if (e.target.closest('button')) return;
+
+        const container = cardWrapper.querySelector('.card-inner');
+        const willBeFlipped = !container.classList.contains('is-flipped');
+        
+        container.classList.toggle('is-flipped');
+
+        // Auto speak on flip if enabled
+        if (willBeFlipped && isAutoSpeechEnabled) {
+          speakWord(item.en);
+        }
+      });
+
+      return cardWrapper;
+    }
+
+    function renderCards(filterQuery = '') {
+      const grid = document.getElementById('cards-grid');
+      grid.innerHTML = '';
+
+      const query = filterQuery.trim().toLowerCase();
+      
+      const filteredList = wordList.filter(item => {
+        return item.en.toLowerCase().includes(query) || 
+               item.cn.toLowerCase().includes(query) ||
+               item.mnemonic.toLowerCase().includes(query);
+      });
+
+      document.getElementById('total-count').textContent = filteredList.length;
+
+      if (filteredList.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-full text-center py-16 bg-white rounded-3xl border border-slate-200">
+            <i class="fa-solid fa-circle-exclamation text-4xl text-amber-500 mb-3"></i>
+            <p class="text-lg font-bold text-slate-700">找不到符合 "${filterQuery}" 的單字</p>
+            <p class="text-xs text-slate-400 mt-1">請重新嘗試其他搜尋關鍵字</p>
+          </div>
+        `;
+        return;
+      }
+
+      filteredList.forEach((item, index) => {
+        const cardNode = createCardElement(item, index);
+        grid.appendChild(cardNode);
+      });
+    }
+
+    function toggleFlipAll() {
+      const containers = document.querySelectorAll('.card-inner');
+      isAllFlipped = !isAllFlipped;
+
+      containers.forEach(container => {
+        if (isAllFlipped) {
+          container.classList.add('is-flipped');
+        } else {
+          container.classList.remove('is-flipped');
+        }
+      });
+
+      const flipBtnText = document.getElementById('flip-all-text');
+      flipBtnText.textContent = isAllFlipped ? "全部正面" : "全部翻面";
+    }
+
+    function toggleAutoSpeech() {
+      isAutoSpeechEnabled = !isAutoSpeechEnabled;
+      const statusText = document.getElementById('sound-status-text');
+      const soundIcon = document.getElementById('sound-icon');
+      const soundBtn = document.getElementById('btn-sound-toggle');
+
+      if (isAutoSpeechEnabled) {
+        statusText.textContent = "翻面朗讀: 開";
+        soundIcon.className = "fa-solid fa-volume-high";
+        soundBtn.className = "px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs sm:text-sm font-bold rounded-xl shadow-sm transition-all flex items-center space-x-2";
+      } else {
+        statusText.textContent = "翻面朗讀: 關";
+        soundIcon.className = "fa-solid fa-volume-xmark";
+        soundBtn.className = "px-3.5 py-2 bg-slate-400 hover:bg-slate-500 text-white text-xs sm:text-sm font-bold rounded-xl shadow-sm transition-all flex items-center space-x-2";
+      }
+    }
+
+    // Search Input Event Listener
+    document.getElementById('search-input').addEventListener('input', (e) => {
+      renderCards(e.target.value);
+    });
+
+    // Initialize Page on Load
+    window.addEventListener('DOMContentLoaded', () => {
+      renderCards();
+    });
+  </script>
+</body>
+</html>
