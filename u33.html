@@ -125,8 +125,11 @@
       background-size: 406% 406%;
       background-repeat: no-repeat;
       transition: transform 0.3s ease;
-      image-rendering: -webkit-optimize-contrast;
-      image-rendering: crisp-edges;
+      image-rendering: auto;
+      image-rendering: smooth;
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
+      transform: translateZ(0);
     }
 
     .card:hover .sprite-img {
