@@ -1,134 +1,1528 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>正在大改造中 | 敬請期待</title>
-    <!-- 引入 Tailwind CSS 用於快速佈局 -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- 引入 Lucide 圖示庫 -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <style>
-        @keyframes blob {
-            0% { transform: translate(0px, 0px) scale(1); }
-            33% { transform: translate(30px, -50px) scale(1.1); }
-            66% { transform: translate(-20px, 20px) scale(0.9); }
-            100% { transform: translate(0px, 0px) scale(1); }
-        }
-        .animate-blob {
-            animation: blob 7s infinite;
-        }
-        .animation-delay-2000 {
-            animation-delay: 2s;
-        }
-        .animation-delay-4000 {
-            animation-delay: 4s;
-        }
-        
-        body {
-            background-color: #F0F7FF;
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🧠 高頻單字 Unit 35 互動記憶卡</title>
+  <style>
+    :root {
+      --primary-color: #0f172a;
+      --secondary-color: #64748b;
+      --accent-orange: #ff9800;
+      --bg-gradient: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+      --card-bg: #ffffff;
+      --card-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+      --border-radius: 28px;
+    }
 
-        .social-icon {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 3rem;
-            height: 3rem;
-            background-color: white;
-            color: #94a3b8;
-            border-radius: 1rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s;
-        }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
 
-        .social-icon:hover {
-            color: white;
-            transform: translateY(-0.5rem);
-        }
+    body {
+      background: var(--bg-gradient);
+      min-height: 100vh;
+      padding: 40px 20px;
+      color: var(--primary-color);
+    }
 
-        .hover-sky:hover { background-color: #38bdf8; }
-        .hover-pink:hover { background-color: #ec4899; }
-        .hover-slate:hover { background-color: #1e293b; }
-        .hover-emerald:hover { background-color: #10b981; }
-    </style>
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    header h1 {
+      font-size: 2.4rem;
+      font-weight: 900;
+      color: var(--primary-color);
+      margin-bottom: 8px;
+      letter-spacing: -0.5px;
+    }
+
+    header p {
+      font-size: 1.1rem;
+      color: var(--secondary-color);
+    }
+
+    .vocab-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 32px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    @media (max-width: 768px) {
+      .vocab-grid {
+        grid-template-columns: 1fr;
+        gap: 24px;
+        padding: 0 8px;
+      }
+      header h1 {
+        font-size: 1.8rem;
+      }
+    }
+
+    /* 3D 翻轉卡片容器 */
+    .card {
+      perspective: 1200px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .card-inner {
+      position: relative;
+      width: 100%;
+      min-height: 480px;
+      transform-style: preserve-3d;
+      transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      border-radius: var(--border-radius);
+      box-shadow: var(--card-shadow);
+      background: var(--card-bg);
+    }
+
+    .card.flipped .card-inner {
+      transform: rotateY(180deg);
+    }
+
+    /* 正反面通用樣式 */
+    .card-front, .card-back {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      border-radius: var(--border-radius);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      background: #ffffff;
+    }
+
+    /* 正面 (Visual Cue Panel) */
+    .img-frame {
+      position: relative;
+      width: 100%;
+      padding-top: 56.25%; /* 16:9 aspect ratio */
+      overflow: hidden;
+      background-color: #f1f5f9;
+      border-top-left-radius: var(--border-radius);
+      border-top-right-radius: var(--border-radius);
+    }
+
+    /* 406% 溢位裁切關鍵 CSS */
+    .sprite-img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-size: 406% 406%;
+      background-repeat: no-repeat;
+      transition: transform 0.3s ease;
+      image-rendering: auto;
+      image-rendering: smooth;
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
+      transform: translateZ(0);
+    }
+
+    .card:hover .sprite-img {
+      transform: scale(1.03);
+    }
+
+    .front-text {
+      flex: 1;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      background: #ffffff;
+    }
+
+    .front-word {
+      font-size: 2.5rem;
+      font-weight: 900;
+      color: var(--primary-color);
+      margin-bottom: 10px;
+      line-height: 1.1;
+    }
+
+    .front-phonetic {
+      font-size: 1.15rem;
+      color: var(--secondary-color);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .audio-btn {
+      background: #f1f5f9;
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 1.2rem;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .audio-btn:hover {
+      background: #e2e8f0;
+      transform: scale(1.08);
+    }
+
+    .hint-tap {
+      margin-top: 12px;
+      font-size: 0.85rem;
+      color: #94a3b8;
+    }
+
+    /* 反面 (Textual Content Panel) */
+    .card-back {
+      transform: rotateY(180deg);
+      padding: 32px 24px;
+      justify-content: space-between;
+      align-items: center;
+      text-align: center;
+    }
+
+    .back-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .back-word {
+      font-size: 3rem;
+      font-weight: 900;
+      color: var(--primary-color);
+      line-height: 1.1;
+    }
+
+    .back-meaning-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+
+    .back-pos {
+      font-size: 1.1rem;
+      background-color: #e2e8f0;
+      color: #334155;
+      padding: 4px 14px;
+      border-radius: 12px;
+      font-style: italic;
+      font-weight: 700;
+    }
+
+    .back-cn {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #1e293b;
+    }
+
+    .back-strategy {
+      font-size: 1.05rem;
+      color: #475569;
+      margin: 8px 0;
+    }
+
+    .mnemonic-box {
+      background-color: var(--accent-orange);
+      color: #ffffff;
+      font-weight: 800;
+      font-size: 1.3rem;
+      padding: 16px 20px;
+      border-radius: 20px;
+      width: 100%;
+      box-shadow: 0 6px 16px rgba(255, 152, 0, 0.3);
+      line-height: 1.4;
+    }
+
+    .example-box {
+      border-top: 1px dashed #cbd5e1;
+      padding-top: 16px;
+      width: 100%;
+      font-size: 1.2rem;
+      color: #475569;
+      font-style: italic;
+      line-height: 1.4;
+    }
+  </style>
 </head>
-<body class="relative min-h-screen w-full flex items-center justify-center">
+<body>
 
-    <!-- 裝飾性背景元素 - 漂浮的圓圈 -->
-    <div class="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-        <div class="absolute top-[10%] left-[15%] w-32 h-32 bg-yellow-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
-        <div class="absolute top-[20%] right-[20%] w-40 h-40 bg-pink-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
-        <div class="absolute bottom-[20%] left-[25%] w-36 h-36 bg-purple-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
-    </div>
+  <header>
+    <h1>🧠 高頻單字 Unit 35 互動記憶卡</h1>
+    <p>💡 點擊卡片即可翻面查看記憶口訣與詳細解釋，自動開啟語音朗讀</p>
+  </header>
 
-    <!-- 底部波浪裝飾 -->
-    <div class="absolute bottom-0 left-0 w-full leading-[0] z-0">
-        <svg viewBox="0 0 1440 320" class="w-full h-auto">
-            <path 
-                fill="#3B82F6" 
-                fill-opacity="1" 
-                d="M0,192L48,197.3C96,203,192,213,288,229.3C384,245,480,267,576,250.7C672,235,768,181,864,181.3C960,181,1056,235,1152,234.7C1248,235,1344,181,1392,154.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
-            ></path>
-        </svg>
-    </div>
-
-    <!-- 主要內容區塊 -->
-    <main class="relative z-10 flex flex-col items-center text-center px-6">
-        
-        <!-- 插畫角色 / 圖示組合 -->
-        <div class="relative mb-10 group">
-            <div class="w-32 h-32 bg-white rounded-full flex items-center justify-center shadow-2xl transition-transform duration-500 hover:scale-110">
-                <div class="relative">
-                    <i data-lucide="construction" class="w-16 h-16 text-blue-500 animate-bounce"></i>
-                    <div class="absolute -top-4 -right-4 rotate-12">
-                        <i data-lucide="hard-hat" class="w-10 h-10 text-yellow-500"></i>
-                    </div>
-                </div>
+  <main class="vocab-grid">
+    
+    <div class="card" onclick="toggleCard(this, 'require')">
+      <div class="card-inner">
+        <!-- 正面 -->
+        <div class="card-front">
+          <div class="img-frame">
+            <div class="sprite-img" style="background-image: url('高頻U35g1.jpg'); background-position: 0.0% 0.0%;"></div>
+          </div>
+          <div class="front-text">
+            <div class="front-word">require</div>
+            <div class="front-phonetic">
+              <span>/rɪˈkwaɪər/</span>
+              <button class="audio-btn" onclick="speakWord('require', event)" title="點擊朗讀">🔊</button>
             </div>
-            <!-- 裝飾小方塊 -->
-            <div class="absolute -top-2 -left-2 w-6 h-6 bg-yellow-400 rounded-md rotate-12 animate-pulse"></div>
-            <div class="absolute -bottom-2 -right-2 w-8 h-8 bg-blue-400 rounded-full animate-bounce"></div>
+            <div class="hint-tap">👆 點擊翻面查看口訣</div>
+          </div>
         </div>
 
-        <!-- 文字標題 -->
-        <div class="space-y-4">
-            <h1 class="text-5xl sm:text-7xl font-black text-slate-800 tracking-tight">
-                正在大改造中 <span class="inline-block animate-pulse text-blue-500">!</span>
-            </h1>
-            <p class="text-xl sm:text-2xl font-bold text-slate-500">
-                很快就會和大家見面了。
-            </p>
+        <!-- 反面 -->
+        <div class="card-back">
+          <div class="back-header">
+            <div class="back-word">require</div>
+            <div class="back-meaning-row">
+              <span class="back-pos">v.</span>
+              <span class="back-cn">要求;需要</span>
+            </div>
+          </div>
+          
+          <div class="back-strategy">💡 記憶策略：諧音 (理快)</div>
+          
+          <div class="mnemonic-box">
+            口訣：老師【要求】大家【理快】(理快)一點寫完作業，這項功課【需要】專心！
+          </div>
+
+          <div class="example-box">
+            "The job requires a lot of hard work and concentration."
+          </div>
+        </div>
+      </div>
+    </div>
+        
+
+    <div class="card" onclick="toggleCard(this, 'gradual')">
+      <div class="card-inner">
+        <!-- 正面 -->
+        <div class="card-front">
+          <div class="img-frame">
+            <div class="sprite-img" style="background-image: url('高頻U35g1.jpg'); background-position: 33.333% 0.0%;"></div>
+          </div>
+          <div class="front-text">
+            <div class="front-word">gradual</div>
+            <div class="front-phonetic">
+              <span>/ˈɡrædʒ.u.əl/</span>
+              <button class="audio-btn" onclick="speakWord('gradual', event)" title="點擊朗讀">🔊</button>
+            </div>
+            <div class="hint-tap">👆 點擊翻面查看口訣</div>
+          </div>
         </div>
 
-        <!-- 描述文字 -->
-        <p class="mt-8 text-slate-400 max-w-md font-medium leading-relaxed">
-            我們正在努力完善網站的每一個細節，<br />
-            為了帶給你最棒的體驗，請再稍等一下下！
-        </p>
+        <!-- 反面 -->
+        <div class="card-back">
+          <div class="back-header">
+            <div class="back-word">gradual</div>
+            <div class="back-meaning-row">
+              <span class="back-pos">adj.</span>
+              <span class="back-cn">逐漸的;循序漸進</span>
+            </div>
+          </div>
+          
+          <div class="back-strategy">💡 記憶策略：拆字 (grade等級+ual)</div>
+          
+          <div class="mnemonic-box">
+            口訣：階梯上的標籤從 Grade 1 到 Grade 3，【等級】(grade)【逐漸】往上升高！
+          </div>
 
-        <!-- 社交媒體按鈕 -->
-        <div class="mt-12 flex gap-6">
-            <a href="#" class="social-icon hover-sky"><i data-lucide="twitter"></i></a>
-            <a href="#" class="social-icon hover-pink"><i data-lucide="instagram"></i></a>
-            <a href="#" class="social-icon hover-slate"><i data-lucide="github"></i></a>
-            <a href="#" class="social-icon hover-emerald"><i data-lucide="globe"></i></a>
+          <div class="example-box">
+            "There has been a gradual improvement in her health."
+          </div>
+        </div>
+      </div>
+    </div>
+        
+
+    <div class="card" onclick="toggleCard(this, 'reluctant')">
+      <div class="card-inner">
+        <!-- 正面 -->
+        <div class="card-front">
+          <div class="img-frame">
+            <div class="sprite-img" style="background-image: url('高頻U35g1.jpg'); background-position: 66.667% 0.0%;"></div>
+          </div>
+          <div class="front-text">
+            <div class="front-word">reluctant</div>
+            <div class="front-phonetic">
+              <span>/rɪˈlʌk.tənt/</span>
+              <button class="audio-btn" onclick="speakWord('reluctant', event)" title="點擊朗讀">🔊</button>
+            </div>
+            <div class="hint-tap">👆 點擊翻面查看口訣</div>
+          </div>
         </div>
 
-        <!-- 頁尾小字 -->
-        <div class="mt-20">
-            <p class="text-white text-sm font-bold tracking-widest uppercase opacity-80">
-                © 2026 Your Brand Studio
-            </p>
-        </div>
-    </main>
+        <!-- 反面 -->
+        <div class="card-back">
+          <div class="back-header">
+            <div class="back-word">reluctant</div>
+            <div class="back-meaning-row">
+              <span class="back-pos">adj.</span>
+              <span class="back-cn">勉強的;不情願</span>
+            </div>
+          </div>
+          
+          <div class="back-strategy">💡 記憶策略：諧音 (惹拉客)</div>
+          
+          <div class="mnemonic-box">
+            口訣：夜市店員強行拽著手【惹拉客】，顧客滿臉【勉強與不情願】地被拉進店裡！
+          </div>
 
-    <script>
-        // 初始化 Lucide 圖示
-        lucide.createIcons();
-    </script>
+          <div class="example-box">
+            "He was reluctant to talk about his past mistakes."
+          </div>
+        </div>
+      </div>
+    </div>
+        
+
+    <div class="card" onclick="toggleCard(this, 'defend')">
+      <div class="card-inner">
+        <!-- 正面 -->
+        <div class="card-front">
+          <div class="img-frame">
+            <div class="sprite-img" style="background-image: url('高頻U35g1.jpg'); background-position: 100.0% 0.0%;"></div>
+          </div>
+          <div class="front-text">
+            <div class="front-word">defend</div>
+            <div class="front-phonetic">
+              <span>/dɪˈfend/</span>
+              <button class="audio-btn" onclick="speakWord('defend', event)" title="點擊朗讀">🔊</button>
+            </div>
+            <div class="hint-tap">👆 點擊翻面查看口訣</div>
+          </div>
+        </div>
+
+        <!-- 反面 -->
+        <div class="card-back">
+          <div class="back-header">
+            <div class="back-word">defend</div>
+            <div class="back-meaning-row">
+              <span class="back-pos">v.</span>
+              <span class="back-cn">防禦;保護</span>
+            </div>
+          </div>
+          
+          <div class="back-strategy">💡 記憶策略：諧音 (敵防)</div>
+          
+          <div class="mnemonic-box">
+            口訣：騎士在城牆上時刻【敵防】(提防敵人)，舉起巨大盾牌【防禦/保護】城堡！
+          </div>
+
+          <div class="example-box">
+            "The soldiers fought bravely to defend their country."
+          </div>
+        </div>
+      </div>
+    </div>
+        
+
+    <div class="card" onclick="toggleCard(this, 'diverse')">
+      <div class="card-inner">
+        <!-- 正面 -->
+        <div class="card-front">
+          <div class="img-frame">
+            <div class="sprite-img" style="background-image: url('高頻U35g1.jpg'); background-position: 0.0% 33.333%;"></div>
+          </div>
+          <div class="front-text">
+            <div class="front-word">diverse</div>
+            <div class="front-phonetic">
+              <span>/daɪˈvɜːs/</span>
+              <button class="audio-btn" onclick="speakWord('diverse', event)" title="點擊朗讀">🔊</button>
+            </div>
+            <div class="hint-tap">👆 點擊翻面查看口訣</div>
+          </div>
+        </div>
+
+        <!-- 反面 -->
+        <div class="card-back">
+          <div class="back-header">
+            <div class="back-word">diverse</div>
+            <div class="back-meaning-row">
+              <span class="back-pos">adj.</span>
+              <span class="back-cn">不同的;各式各樣</span>
+            </div>
+          </div>
+          
+          <div class="back-strategy">💡 記憶策略：字根 (di分開+vers轉動)</div>
+          
+          <div class="mnemonic-box">
+            口訣：輪盤向各個方向分開轉動(di+vers)，呈現出【各式各樣的/不同的】繽紛色彩！
+          </div>
+
+          <div class="example-box">
+            "The museum has a diverse collection of modern art."
+          </div>
+        </div>
+      </div>
+    </div>
+        
+
+    <div class="card" onclick="toggleCard(this, 'resign')">
+      <div class="card-inner">
+        <!-- 正面 -->
+        <div class="card-front">
+          <div class="img-frame">
+            <div class="sprite-img" style="background-image: url('高頻U35g1.jpg'); background-position: 33.333% 33.333%;"></div>
+          </div>
+          <div class="front-text">
+            <div class="front-word">resign</div>
+            <div class="front-phonetic">
+              <span>/rɪˈzaɪn/</span>
+              <button class="audio-btn" onclick="speakWord('resign', event)" title="點擊朗讀">🔊</button>
+            </div>
+            <div class="hint-tap">👆 點擊翻面查看口訣</div>
+          </div>
+        </div>
+
+        <!-- 反面 -->
+        <div class="card-back">
+          <div class="back-header">
+            <div class="back-word">resign</div>
+            <div class="back-meaning-row">
+              <span class="back-pos">v.</span>
+              <span class="back-cn">辭職;放棄</span>
+            </div>
+          </div>
+          
+          <div class="back-strategy">💡 記憶策略：字根 (re背離+sign簽名)</div>
+          
+          <div class="mnemonic-box">
+            口訣：員工在離職申請書上簽下姓名(sign)，決定【辭職】離開公司。
+          </div>
+
+          <div class="example-box">
+            "He decided to resign from his position as manager."
+          </div>
+        </div>
+      </div>
+    </div>
+        
+
+    <div class="card" onclick="toggleCard(this, 'assemble')">
+      <div class="card-inner">
+        <!-- 正面 -->
+        <div class="card-front">
+          <div class="img-frame">
+            <div class="sprite-img" style="background-image: url('高頻U35g1.jpg'); background-position: 66.667% 33.333%;"></div>
+          </div>
+          <div class="front-text">
+            <div class="front-word">assemble</div>
+            <div class="front-phonetic">
+              <span>/əˈsem.bəl/</span>
+              <button class="audio-btn" onclick="speakWord('assemble', event)" title="點擊朗讀">🔊</button>
+            </div>
+            <div class="hint-tap">👆 點擊翻面查看口訣</div>
+          </div>
+        </div>
+
+        <!-- 反面 -->
+        <div class="card-back">
+          <div class="back-header">
+            <div class="back-word">assemble</div>
+            <div class="back-meaning-row">
+              <span class="back-pos">v.</span>
+              <span class="back-cn">集合;組裝</span>
+            </div>
+          </div>
+          
+          <div class="back-strategy">💡 記憶策略：字根 (as朝向+semble相同)</div>
+          
+          <div class="mnemonic-box">
+            口訣：工程師拿著螺絲起子，將機器零件一個個【組裝/集合】在一起。
+          </div>
+
+          <div class="example-box">
+            "It took hours to assemble the new bookshelf."
+          </div>
+        </div>
+      </div>
+    </div>
+        
+
+    <div class="card" onclick="toggleCard(this, 'distribute')">
+      <div class="card-inner">
+        <!-- 正面 -->
+        <div class="card-front">
+          <div class="img-frame">
+            <div class="sprite-img" style="background-image: url('高頻U35g1.jpg'); background-position: 100.0% 33.333%;"></div>
+          </div>
+          <div class="front-text">
+            <div class="front-word">distribute</div>
+            <div class="front-phonetic">
+              <span>/dɪˈstrɪb.juːt/</span>
+              <button class="audio-btn" onclick="speakWord('distribute', event)" title="點擊朗讀">🔊</button>
+            </div>
+            <div class="hint-tap">👆 點擊翻面查看口訣</div>
+          </div>
+        </div>
+
+        <!-- 反面 -->
+        <div class="card-back">
+          <div class="back-header">
+            <div class="back-word">distribute</div>
+            <div class="back-meaning-row">
+              <span class="back-pos">v.</span>
+              <span class="back-cn">分送;分配</span>
+            </div>
+          </div>
+          
+          <div class="back-strategy">💡 記憶策略：字根 (dis分開+tribute給予)</div>
+          
+          <div class="mnemonic-box">
+            口訣：郵差騎著摩托車，將一封封信件【分送】到各家郵箱裡。
+          </div>
+
+          <div class="example-box">
+            "Volunteers distributed food to the homeless people."
+          </div>
+        </div>
+      </div>
+    </div>
+        
+
+    <div class="card" onclick="toggleCard(this, 'frustrate')">
+      <div class="card-inner">
+        <!-- 正面 -->
+        <div class="card-front">
+          <div class="img-frame">
+            <div class="sprite-img" style="background-image: url('高頻U35g1.jpg'); background-position: 0.0% 66.667%;"></div>
+          </div>
+          <div class="front-text">
+            <div class="front-word">frustrate</div>
+            <div class="front-phonetic">
+              <span>/frʌsˈtreɪt/</span>
+              <button class="audio-btn" onclick="speakWord('frustrate', event)" title="點擊朗讀">🔊</button>
+            </div>
+            <div class="hint-tap">👆 點擊翻面查看口訣</div>
+          </div>
+        </div>
+
+        <!-- 反面 -->
+        <div class="card-back">
+          <div class="back-header">
+            <div class="back-word">frustrate</div>
+            <div class="back-meaning-row">
+              <span class="back-pos">v.</span>
+              <span class="back-cn">使沮喪;使灰心</span>
+            </div>
+          </div>
+          
+          <div class="back-strategy">💡 記憶策略：諧音 (扶死推)</div>
+          
+          <div class="mnemonic-box">
+            口訣：太沉重的大木箱【扶死推】不動，讓人大汗淋漓感到極度【沮喪與灰心】！
+          </div>
+
+          <div class="example-box">
+            "The continuous rain frustrated our outdoor plans."
+          </div>
+        </div>
+      </div>
+    </div>
+        
+
+    <div class="card" onclick="toggleCard(this, 'immigrate')">
+      <div class="card-inner">
+        <!-- 正面 -->
+        <div class="card-front">
+          <div class="img-frame">
+            <div class="sprite-img" style="background-image: url('高頻U35g1.jpg'); background-position: 33.333% 66.667%;"></div>
+          </div>
+          <div class="front-text">
+            <div class="front-word">immigrate</div>
+            <div class="front-phonetic">
+              <span>/ˈɪm.ɪ.ɡreɪt/</span>
+              <button class="audio-btn" onclick="speakWord('immigrate', event)" title="點擊朗讀">🔊</button>
+            </div>
+            <div class="hint-tap">👆 點擊翻面查看口訣</div>
+          </div>
+        </div>
+
+        <!-- 反面 -->
+        <div class="card-back">
+          <div class="back-header">
+            <div class="back-word">immigrate</div>
+            <div class="back-meaning-row">
+              <span class="back-pos">v.</span>
+              <span class="back-cn">移民 (移入)</span>
+            </div>
+          </div>
+          
+          <div class="back-strategy">💡 記憶策略：字根 (im向內+migrate遷移)</div>
+          
+          <div class="mnemonic-box">
+            口訣：一家人拉著行李箱踏上新土地，辦理入境手續【移民】海外。
+          </div>
+
+          <div class="example-box">
+            "His grandparents immigrated to Canada in the 1960s."
+          </div>
+        </div>
+      </div>
+    </div>
+        
+
+    <div class="card" onclick="toggleCard(this, 'genuine')">
+      <div class="card-inner">
+        <!-- 正面 -->
+        <div class="card-front">
+          <div class="img-frame">
+            <div class="sprite-img" style="background-image: url('高頻U35g1.jpg'); background-position: 66.667% 66.667%;"></div>
+          </div>
+          <div class="front-text">
+            <div class="front-word">genuine</div>
+            <div class="front-phonetic">
+              <span>/ˈdʒen.ju.ɪn/</span>
+              <button class="audio-btn" onclick="speakWord('genuine', event)" title="點擊朗讀">🔊</button>
+            </div>
+            <div class="hint-tap">👆 點擊翻面查看口訣</div>
+          </div>
+        </div>
+
+        <!-- 反面 -->
+        <div class="card-back">
+          <div class="back-header">
+            <div class="back-word">genuine</div>
+            <div class="back-meaning-row">
+              <span class="back-pos">adj.</span>
+              <span class="back-cn">真正的;真誠的</span>
+            </div>
+          </div>
+          
+          <div class="back-strategy">💡 記憶策略：諧音 (珍妮)</div>
+          
+          <div class="mnemonic-box">
+            口訣：【珍妮】露出最【真誠的】微笑，展示一顆【真正的】亮晶晶天然鑽石！
+          </div>
+
+          <div class="example-box">
+            "She showed genuine concern for her friend's safety."
+          </div>
+        </div>
+      </div>
+    </div>
+        
+
+    <div class="card" onclick="toggleCard(this, 'equipment')">
+      <div class="card-inner">
+        <!-- 正面 -->
+        <div class="card-front">
+          <div class="img-frame">
+            <div class="sprite-img" style="background-image: url('高頻U35g1.jpg'); background-position: 100.0% 66.667%;"></div>
+          </div>
+          <div class="front-text">
+            <div class="front-word">equipment</div>
+            <div class="front-phonetic">
+              <span>/ɪˈkwɪp.mənt/</span>
+              <button class="audio-btn" onclick="speakWord('equipment', event)" title="點擊朗讀">🔊</button>
+            </div>
+            <div class="hint-tap">👆 點擊翻面查看口訣</div>
+          </div>
+        </div>
+
+        <!-- 反面 -->
+        <div class="card-back">
+          <div class="back-header">
+            <div class="back-word">equipment</div>
+            <div class="back-meaning-row">
+              <span class="back-pos">n.</span>
+              <span class="back-cn">設備;裝備</span>
+            </div>
+          </div>
+          
+          <div class="back-strategy">💡 記憶策略：字根 (equip配備+ment名詞)</div>
+          
+          <div class="mnemonic-box">
+            口訣：露營前仔細檢查配備(equip)，準備齊全的【戶外裝備/設備】！
+          </div>
+
+          <div class="example-box">
+            "The gym is equipped with modern fitness equipment."
+          </div>
+        </div>
+      </div>
+    </div>
+        
+
+    <div class="card" onclick="toggleCard(this, 'inflate')">
+      <div class="card-inner">
+        <!-- 正面 -->
+        <div class="card-front">
+          <div class="img-frame">
+            <div class="sprite-img" style="background-image: url('高頻U35g1.jpg'); background-position: 0.0% 100.0%;"></div>
+          </div>
+          <div class="front-text">
+            <div class="front-word">inflate</div>
+            <div class="front-phonetic">
+              <span>/ɪnˈfleɪt/</span>
+              <button class="audio-btn" onclick="speakWord('inflate', event)" title="點擊朗讀">🔊</button>
+            </div>
+            <div class="hint-tap">👆 點擊翻面查看口訣</div>
+          </div>
+        </div>
+
+        <!-- 反面 -->
+        <div class="card-back">
+          <div class="back-header">
+            <div class="back-word">inflate</div>
+            <div class="back-meaning-row">
+              <span class="back-pos">v.</span>
+              <span class="back-cn">使充氣;物價上漲</span>
+            </div>
+          </div>
+          
+          <div class="back-strategy">💡 記憶策略：字根 (in向內+flate吹氣)</div>
+          
+          <div class="mnemonic-box">
+            口訣：小朋友用打氣筒向內吹氣(flate)，將繽紛的大氣球【充氣/吹大】！
+          </div>
+
+          <div class="example-box">
+            "Use a pump to inflate the bicycle tire."
+          </div>
+        </div>
+      </div>
+    </div>
+        
+
+    <div class="card" onclick="toggleCard(this, 'intimate')">
+      <div class="card-inner">
+        <!-- 正面 -->
+        <div class="card-front">
+          <div class="img-frame">
+            <div class="sprite-img" style="background-image: url('高頻U35g1.jpg'); background-position: 33.333% 100.0%;"></div>
+          </div>
+          <div class="front-text">
+            <div class="front-word">intimate</div>
+            <div class="front-phonetic">
+              <span>/ˈɪn.tɪ.mət/</span>
+              <button class="audio-btn" onclick="speakWord('intimate', event)" title="點擊朗讀">🔊</button>
+            </div>
+            <div class="hint-tap">👆 點擊翻面查看口訣</div>
+          </div>
+        </div>
+
+        <!-- 反面 -->
+        <div class="card-back">
+          <div class="back-header">
+            <div class="back-word">intimate</div>
+            <div class="back-meaning-row">
+              <span class="back-pos">adj.</span>
+              <span class="back-cn">親密的;私密的</span>
+            </div>
+          </div>
+          
+          <div class="back-strategy">💡 記憶策略：字根 (inti最深內+mate夥伴)</div>
+          
+          <div class="mnemonic-box">
+            口訣：兩位從小一起長大的閨蜜搭著肩悄悄說話，關係非常【親密】。
+          </div>
+
+          <div class="example-box">
+            "They share an intimate friendship after many years together."
+          </div>
+        </div>
+      </div>
+    </div>
+        
+
+    <div class="card" onclick="toggleCard(this, 'fulfill')">
+      <div class="card-inner">
+        <!-- 正面 -->
+        <div class="card-front">
+          <div class="img-frame">
+            <div class="sprite-img" style="background-image: url('高頻U35g1.jpg'); background-position: 66.667% 100.0%;"></div>
+          </div>
+          <div class="front-text">
+            <div class="front-word">fulfill</div>
+            <div class="front-phonetic">
+              <span>/fʊlˈfɪl/</span>
+              <button class="audio-btn" onclick="speakWord('fulfill', event)" title="點擊朗讀">🔊</button>
+            </div>
+            <div class="hint-tap">👆 點擊翻面查看口訣</div>
+          </div>
+        </div>
+
+        <!-- 反面 -->
+        <div class="card-back">
+          <div class="back-header">
+            <div class="back-word">fulfill</div>
+            <div class="back-meaning-row">
+              <span class="back-pos">v.</span>
+              <span class="back-cn">實現;滿足</span>
+            </div>
+          </div>
+          
+          <div class="back-strategy">💡 記憶策略：組合字 (full滿+fill填滿)</div>
+          
+          <div class="mnemonic-box">
+            口訣：經過不懈努力，終於成功【實現/滿足】了自己的夢想！
+          </div>
+
+          <div class="example-box">
+            "He finally fulfilled his lifelong dream of writing a novel."
+          </div>
+        </div>
+      </div>
+    </div>
+        
+
+    <div class="card" onclick="toggleCard(this, 'resemble')">
+      <div class="card-inner">
+        <!-- 正面 -->
+        <div class="card-front">
+          <div class="img-frame">
+            <div class="sprite-img" style="background-image: url('高頻U35g2.jpg'); background-position: 0.0% 0.0%;"></div>
+          </div>
+          <div class="front-text">
+            <div class="front-word">resemble</div>
+            <div class="front-phonetic">
+              <span>/rɪˈzem.bəl/</span>
+              <button class="audio-btn" onclick="speakWord('resemble', event)" title="點擊朗讀">🔊</button>
+            </div>
+            <div class="hint-tap">👆 點擊翻面查看口訣</div>
+          </div>
+        </div>
+
+        <!-- 反面 -->
+        <div class="card-back">
+          <div class="back-header">
+            <div class="back-word">resemble</div>
+            <div class="back-meaning-row">
+              <span class="back-pos">v.</span>
+              <span class="back-cn">相似;相像</span>
+            </div>
+          </div>
+          
+          <div class="back-strategy">💡 記憶策略：字根 (re再次+semble相同)</div>
+          
+          <div class="mnemonic-box">
+            口訣：兩人的輪廓再次相同(re+semble)，小男孩與爸爸長得極為【相似/相像】！
+          </div>
+
+          <div class="example-box">
+            "The young boy strongly resembles his grandfather."
+          </div>
+        </div>
+      </div>
+    </div>
+        
+
+    <div class="card" onclick="toggleCard(this, 'ingredient')">
+      <div class="card-inner">
+        <!-- 正面 -->
+        <div class="card-front">
+          <div class="img-frame">
+            <div class="sprite-img" style="background-image: url('高頻U35g2.jpg'); background-position: 33.333% 0.0%;"></div>
+          </div>
+          <div class="front-text">
+            <div class="front-word">ingredient</div>
+            <div class="front-phonetic">
+              <span>/ɪnˈɡriː.di.ənt/</span>
+              <button class="audio-btn" onclick="speakWord('ingredient', event)" title="點擊朗讀">🔊</button>
+            </div>
+            <div class="hint-tap">👆 點擊翻面查看口訣</div>
+          </div>
+        </div>
+
+        <!-- 反面 -->
+        <div class="card-back">
+          <div class="back-header">
+            <div class="back-word">ingredient</div>
+            <div class="back-meaning-row">
+              <span class="back-pos">n.</span>
+              <span class="back-cn">原料;成分</span>
+            </div>
+          </div>
+          
+          <div class="back-strategy">💡 記憶策略：諧音 (硬雞蛋)</div>
+          
+          <div class="mnemonic-box">
+            口訣：烘焙師在桌上記錄麵粉與【硬雞蛋】，調配料理需要的【原料與成分】！
+          </div>
+
+          <div class="example-box">
+            "Flour and sugar are main ingredients for baking cakes."
+          </div>
+        </div>
+      </div>
+    </div>
+        
+
+    <div class="card" onclick="toggleCard(this, 'consequence')">
+      <div class="card-inner">
+        <!-- 正面 -->
+        <div class="card-front">
+          <div class="img-frame">
+            <div class="sprite-img" style="background-image: url('高頻U35g2.jpg'); background-position: 66.667% 0.0%;"></div>
+          </div>
+          <div class="front-text">
+            <div class="front-word">consequence</div>
+            <div class="front-phonetic">
+              <span>/ˈkɒn.sɪ.kwəns/</span>
+              <button class="audio-btn" onclick="speakWord('consequence', event)" title="點擊朗讀">🔊</button>
+            </div>
+            <div class="hint-tap">👆 點擊翻面查看口訣</div>
+          </div>
+        </div>
+
+        <!-- 反面 -->
+        <div class="card-back">
+          <div class="back-header">
+            <div class="back-word">consequence</div>
+            <div class="back-meaning-row">
+              <span class="back-pos">n.</span>
+              <span class="back-cn">後果;結果</span>
+            </div>
+          </div>
+          
+          <div class="back-strategy">💡 記憶策略：字根 (con共同+sequ跟隨)</div>
+          
+          <div class="mnemonic-box">
+            口訣：隨手亂丟垃圾，隨後跟隨(sequ)發生的環境污染就是嚴重的【後果】！
+          </div>
+
+          <div class="example-box">
+            "He had to face the consequence of his careless actions."
+          </div>
+        </div>
+      </div>
+    </div>
+        
+
+    <div class="card" onclick="toggleCard(this, 'satisfy')">
+      <div class="card-inner">
+        <!-- 正面 -->
+        <div class="card-front">
+          <div class="img-frame">
+            <div class="sprite-img" style="background-image: url('高頻U35g2.jpg'); background-position: 100.0% 0.0%;"></div>
+          </div>
+          <div class="front-text">
+            <div class="front-word">satisfy</div>
+            <div class="front-phonetic">
+              <span>/ˈsæt.ɪs.faɪ/</span>
+              <button class="audio-btn" onclick="speakWord('satisfy', event)" title="點擊朗讀">🔊</button>
+            </div>
+            <div class="hint-tap">👆 點擊翻面查看口訣</div>
+          </div>
+        </div>
+
+        <!-- 反面 -->
+        <div class="card-back">
+          <div class="back-header">
+            <div class="back-word">satisfy</div>
+            <div class="back-meaning-row">
+              <span class="back-pos">v.</span>
+              <span class="back-cn">使滿意;使滿足</span>
+            </div>
+          </div>
+          
+          <div class="back-strategy">💡 記憶策略：諧音 (殺得快)</div>
+          
+          <div class="mnemonic-box">
+            口訣：羽球選手【殺球殺得快】，優異亮眼的表現讓教練非常【滿意與滿足】！
+          </div>
+
+          <div class="example-box">
+            "The delicious food satisfied everyone at the dinner table."
+          </div>
+        </div>
+      </div>
+    </div>
+        
+
+    <div class="card" onclick="toggleCard(this, 'conserve')">
+      <div class="card-inner">
+        <!-- 正面 -->
+        <div class="card-front">
+          <div class="img-frame">
+            <div class="sprite-img" style="background-image: url('高頻U35g2.jpg'); background-position: 0.0% 33.333%;"></div>
+          </div>
+          <div class="front-text">
+            <div class="front-word">conserve</div>
+            <div class="front-phonetic">
+              <span>/kənˈsɜːv/</span>
+              <button class="audio-btn" onclick="speakWord('conserve', event)" title="點擊朗讀">🔊</button>
+            </div>
+            <div class="hint-tap">👆 點擊翻面查看口訣</div>
+          </div>
+        </div>
+
+        <!-- 反面 -->
+        <div class="card-back">
+          <div class="back-header">
+            <div class="back-word">conserve</div>
+            <div class="back-meaning-row">
+              <span class="back-pos">v.</span>
+              <span class="back-cn">保存;節約;保護</span>
+            </div>
+          </div>
+          
+          <div class="back-strategy">💡 記憶策略：字根 (con共同+serve保持)</div>
+          
+          <div class="mnemonic-box">
+            口訣：大家共同保持(con+serve)水資源，隨手關緊水龍頭【節約/保存】用水！
+          </div>
+
+          <div class="example-box">
+            "We must conserve energy by turning off unused lights."
+          </div>
+        </div>
+      </div>
+    </div>
+        
+
+    <div class="card" onclick="toggleCard(this, 'responsible')">
+      <div class="card-inner">
+        <!-- 正面 -->
+        <div class="card-front">
+          <div class="img-frame">
+            <div class="sprite-img" style="background-image: url('高頻U35g2.jpg'); background-position: 33.333% 33.333%;"></div>
+          </div>
+          <div class="front-text">
+            <div class="front-word">responsible</div>
+            <div class="front-phonetic">
+              <span>/rɪˈspɒn.sə.bəl/</span>
+              <button class="audio-btn" onclick="speakWord('responsible', event)" title="點擊朗讀">🔊</button>
+            </div>
+            <div class="hint-tap">👆 點擊翻面查看口訣</div>
+          </div>
+        </div>
+
+        <!-- 反面 -->
+        <div class="card-back">
+          <div class="back-header">
+            <div class="back-word">responsible</div>
+            <div class="back-meaning-row">
+              <span class="back-pos">adj.</span>
+              <span class="back-cn">承擔責任的;有責任感</span>
+            </div>
+          </div>
+          
+          <div class="back-strategy">💡 記憶策略：字根 (respond回應+ible能)</div>
+          
+          <div class="mnemonic-box">
+            口訣：面對任務能積極回應承諾(respond+ible)，展現出強烈的【責任感】！
+          </div>
+
+          <div class="example-box">
+            "Parents are responsible for the safety of their children."
+          </div>
+        </div>
+      </div>
+    </div>
+        
+
+    <div class="card" onclick="toggleCard(this, 'negotiate')">
+      <div class="card-inner">
+        <!-- 正面 -->
+        <div class="card-front">
+          <div class="img-frame">
+            <div class="sprite-img" style="background-image: url('高頻U35g2.jpg'); background-position: 66.667% 33.333%;"></div>
+          </div>
+          <div class="front-text">
+            <div class="front-word">negotiate</div>
+            <div class="front-phonetic">
+              <span>/nəˈɡəʊ.ʃi.eɪt/</span>
+              <button class="audio-btn" onclick="speakWord('negotiate', event)" title="點擊朗讀">🔊</button>
+            </div>
+            <div class="hint-tap">👆 點擊翻面查看口訣</div>
+          </div>
+        </div>
+
+        <!-- 反面 -->
+        <div class="card-back">
+          <div class="back-header">
+            <div class="back-word">negotiate</div>
+            <div class="back-meaning-row">
+              <span class="back-pos">v.</span>
+              <span class="back-cn">談判;商量</span>
+            </div>
+          </div>
+          
+          <div class="back-strategy">💡 記憶策略：諧音 (你溝通)</div>
+          
+          <div class="mnemonic-box">
+            口訣：談判桌上告訴對方：「【你溝通】得越好，這筆合約越容易【談判/商量】成功！」
+          </div>
+
+          <div class="example-box">
+            "The two countries negotiated a new trade treaty."
+          </div>
+        </div>
+      </div>
+    </div>
+        
+
+    <div class="card" onclick="toggleCard(this, 'generation')">
+      <div class="card-inner">
+        <!-- 正面 -->
+        <div class="card-front">
+          <div class="img-frame">
+            <div class="sprite-img" style="background-image: url('高頻U35g2.jpg'); background-position: 100.0% 33.333%;"></div>
+          </div>
+          <div class="front-text">
+            <div class="front-word">generation</div>
+            <div class="front-phonetic">
+              <span>/ˌdʒen.əˈreɪ.ʃən/</span>
+              <button class="audio-btn" onclick="speakWord('generation', event)" title="點擊朗讀">🔊</button>
+            </div>
+            <div class="hint-tap">👆 點擊翻面查看口訣</div>
+          </div>
+        </div>
+
+        <!-- 反面 -->
+        <div class="card-back">
+          <div class="back-header">
+            <div class="back-word">generation</div>
+            <div class="back-meaning-row">
+              <span class="back-pos">n.</span>
+              <span class="back-cn">世代;一代</span>
+            </div>
+          </div>
+          
+          <div class="back-strategy">💡 記憶策略：字根 (gen生育傳承+eration)</div>
+          
+          <div class="mnemonic-box">
+            口訣：祖孫三代由生育血統傳承(gen)，拍照記錄各個【世代】的歡樂時光！
+          </div>
+
+          <div class="example-box">
+            "Stories were passed down from one generation to the next."
+          </div>
+        </div>
+      </div>
+    </div>
+        
+
+    <div class="card" onclick="toggleCard(this, 'appropriate')">
+      <div class="card-inner">
+        <!-- 正面 -->
+        <div class="card-front">
+          <div class="img-frame">
+            <div class="sprite-img" style="background-image: url('高頻U35g2.jpg'); background-position: 0.0% 66.667%;"></div>
+          </div>
+          <div class="front-text">
+            <div class="front-word">appropriate</div>
+            <div class="front-phonetic">
+              <span>/əˈprəʊ.pri.ət/</span>
+              <button class="audio-btn" onclick="speakWord('appropriate', event)" title="點擊朗讀">🔊</button>
+            </div>
+            <div class="hint-tap">👆 點擊翻面查看口訣</div>
+          </div>
+        </div>
+
+        <!-- 反面 -->
+        <div class="card-back">
+          <div class="back-header">
+            <div class="back-word">appropriate</div>
+            <div class="back-meaning-row">
+              <span class="back-pos">adj.</span>
+              <span class="back-cn">適當的;合適的</span>
+            </div>
+          </div>
+          
+          <div class="back-strategy">💡 記憶策略：諧音 (阿婆怕熱)</div>
+          
+          <div class="mnemonic-box">
+            口訣：【阿婆怕熱】在夏天穿上清涼透氣衫，在炎夏裡顯得非常【適當/合適】！
+          </div>
+
+          <div class="example-box">
+            "Please wear appropriate clothing for the job interview."
+          </div>
+        </div>
+      </div>
+    </div>
+        
+
+    <div class="card" onclick="toggleCard(this, 'accurate')">
+      <div class="card-inner">
+        <!-- 正面 -->
+        <div class="card-front">
+          <div class="img-frame">
+            <div class="sprite-img" style="background-image: url('高頻U35g2.jpg'); background-position: 33.333% 66.667%;"></div>
+          </div>
+          <div class="front-text">
+            <div class="front-word">accurate</div>
+            <div class="front-phonetic">
+              <span>/ˈæk.jə.rət/</span>
+              <button class="audio-btn" onclick="speakWord('accurate', event)" title="點擊朗讀">🔊</button>
+            </div>
+            <div class="hint-tap">👆 點擊翻面查看口訣</div>
+          </div>
+        </div>
+
+        <!-- 反面 -->
+        <div class="card-back">
+          <div class="back-header">
+            <div class="back-word">accurate</div>
+            <div class="back-meaning-row">
+              <span class="back-pos">adj.</span>
+              <span class="back-cn">精確的;準確的</span>
+            </div>
+          </div>
+          
+          <div class="back-strategy">💡 記憶策略：字根 (ac朝向+cur精細)</div>
+          
+          <div class="mnemonic-box">
+            口訣：仔細照顧(cur)每一個微小角度，弓箭手一箭【精確地】命中靶心！
+          </div>
+
+          <div class="example-box">
+            "The clock provides accurate time down to the second."
+          </div>
+        </div>
+      </div>
+    </div>
+        
+
+    <div class="card" onclick="toggleCard(this, 'hesitate')">
+      <div class="card-inner">
+        <!-- 正面 -->
+        <div class="card-front">
+          <div class="img-frame">
+            <div class="sprite-img" style="background-image: url('高頻U35g2.jpg'); background-position: 66.667% 66.667%;"></div>
+          </div>
+          <div class="front-text">
+            <div class="front-word">hesitate</div>
+            <div class="front-phonetic">
+              <span>/ˈhez.ɪ.teɪt/</span>
+              <button class="audio-btn" onclick="speakWord('hesitate', event)" title="點擊朗讀">🔊</button>
+            </div>
+            <div class="hint-tap">👆 點擊翻面查看口訣</div>
+          </div>
+        </div>
+
+        <!-- 反面 -->
+        <div class="card-back">
+          <div class="back-header">
+            <div class="back-word">hesitate</div>
+            <div class="back-meaning-row">
+              <span class="back-pos">v.</span>
+              <span class="back-cn">猶豫;遲疑</span>
+            </div>
+          </div>
+          
+          <div class="back-strategy">💡 記憶策略：諧音 (黑鞋貼)</div>
+          
+          <div class="mnemonic-box">
+            口訣：穿著【黑鞋貼】在路口，面對左右兩條岔路，旅人在路口感到非常【猶豫/遲疑】！
+          </div>
+
+          <div class="example-box">
+            "Do not hesitate to contact me if you have questions."
+          </div>
+        </div>
+      </div>
+    </div>
+        
+
+    <div class="card" onclick="toggleCard(this, 'pronounce')">
+      <div class="card-inner">
+        <!-- 正面 -->
+        <div class="card-front">
+          <div class="img-frame">
+            <div class="sprite-img" style="background-image: url('高頻U35g2.jpg'); background-position: 100.0% 66.667%;"></div>
+          </div>
+          <div class="front-text">
+            <div class="front-word">pronounce</div>
+            <div class="front-phonetic">
+              <span>/prəˈnaʊns/</span>
+              <button class="audio-btn" onclick="speakWord('pronounce', event)" title="點擊朗讀">🔊</button>
+            </div>
+            <div class="hint-tap">👆 點擊翻面查看口訣</div>
+          </div>
+        </div>
+
+        <!-- 反面 -->
+        <div class="card-back">
+          <div class="back-header">
+            <div class="back-word">pronounce</div>
+            <div class="back-meaning-row">
+              <span class="back-pos">v.</span>
+              <span class="back-cn">發音;法庭宣稱</span>
+            </div>
+          </div>
+          
+          <div class="back-strategy">💡 記憶策略：字根 (pro向前+nounce宣告)</div>
+          
+          <div class="mnemonic-box">
+            口訣：語言老師向前大聲宣告(pro+nounce)，為學生示範標準正確的【發音】！
+          </div>
+
+          <div class="example-box">
+            "How do you pronounce this difficult foreign word?"
+          </div>
+        </div>
+      </div>
+    </div>
+        
+
+    <div class="card" onclick="toggleCard(this, 'autobiography')">
+      <div class="card-inner">
+        <!-- 正面 -->
+        <div class="card-front">
+          <div class="img-frame">
+            <div class="sprite-img" style="background-image: url('高頻U35g2.jpg'); background-position: 0.0% 100.0%;"></div>
+          </div>
+          <div class="front-text">
+            <div class="front-word">autobiography</div>
+            <div class="front-phonetic">
+              <span>/ˌɔː.tə.baɪˈɒɡ.rə.fi/</span>
+              <button class="audio-btn" onclick="speakWord('autobiography', event)" title="點擊朗讀">🔊</button>
+            </div>
+            <div class="hint-tap">👆 點擊翻面查看口訣</div>
+          </div>
+        </div>
+
+        <!-- 反面 -->
+        <div class="card-back">
+          <div class="back-header">
+            <div class="back-word">autobiography</div>
+            <div class="back-meaning-row">
+              <span class="back-pos">n.</span>
+              <span class="back-cn">自傳</span>
+            </div>
+          </div>
+          
+          <div class="back-strategy">💡 記憶策略：字根 (auto自己+bio生命+graphy寫作)</div>
+          
+          <div class="mnemonic-box">
+            口訣：作者親手寫下紀錄自己生命(auto+bio+graphy)的【自傳】書籍！
+          </div>
+
+          <div class="example-box">
+            "The famous singer published her autobiography last year."
+          </div>
+        </div>
+      </div>
+    </div>
+        
+
+    <div class="card" onclick="toggleCard(this, 'audience')">
+      <div class="card-inner">
+        <!-- 正面 -->
+        <div class="card-front">
+          <div class="img-frame">
+            <div class="sprite-img" style="background-image: url('高頻U35g2.jpg'); background-position: 33.333% 100.0%;"></div>
+          </div>
+          <div class="front-text">
+            <div class="front-word">audience</div>
+            <div class="front-phonetic">
+              <span>/ˈɔː.di.əns/</span>
+              <button class="audio-btn" onclick="speakWord('audience', event)" title="點擊朗讀">🔊</button>
+            </div>
+            <div class="hint-tap">👆 點擊翻面查看口訣</div>
+          </div>
+        </div>
+
+        <!-- 反面 -->
+        <div class="card-back">
+          <div class="back-header">
+            <div class="back-word">audience</div>
+            <div class="back-meaning-row">
+              <span class="back-pos">n.</span>
+              <span class="back-cn">觀眾;聽眾</span>
+            </div>
+          </div>
+          
+          <div class="back-strategy">💡 記憶策略：字根 (audi聽+ence)</div>
+          
+          <div class="mnemonic-box">
+            口訣：劇院裡的【觀眾/聽眾】在表演結束後熱烈鼓掌歡呼！
+          </div>
+
+          <div class="example-box">
+            "The audience cheered wildly for the magician's trick."
+          </div>
+        </div>
+      </div>
+    </div>
+        
+
+    <div class="card" onclick="toggleCard(this, 'circumstance')">
+      <div class="card-inner">
+        <!-- 正面 -->
+        <div class="card-front">
+          <div class="img-frame">
+            <div class="sprite-img" style="background-image: url('高頻U35g2.jpg'); background-position: 66.667% 100.0%;"></div>
+          </div>
+          <div class="front-text">
+            <div class="front-word">circumstance</div>
+            <div class="front-phonetic">
+              <span>/ˈsɜː.kəm.stæns/</span>
+              <button class="audio-btn" onclick="speakWord('circumstance', event)" title="點擊朗讀">🔊</button>
+            </div>
+            <div class="hint-tap">👆 點擊翻面查看口訣</div>
+          </div>
+        </div>
+
+        <!-- 反面 -->
+        <div class="card-back">
+          <div class="back-header">
+            <div class="back-word">circumstance</div>
+            <div class="back-meaning-row">
+              <span class="back-pos">n.</span>
+              <span class="back-cn">情況;情勢</span>
+            </div>
+          </div>
+          
+          <div class="back-strategy">💡 記憶策略：字根 (circum周圍+stance站立)</div>
+          
+          <div class="mnemonic-box">
+            口訣：觀察站立在自己周圍(circum+stance)的各種環境【情況與情勢】！
+          </div>
+
+          <div class="example-box">
+            "Under no circumstances should you give up your dream."
+          </div>
+        </div>
+      </div>
+    </div>
+        
+  </main>
+
+  <script>
+    // 語音朗讀引擎 (Web Speech API)
+    function speakWord(word, event) {
+      if (event) event.stopPropagation(); // 避免點擊發音按鈕觸發翻牌
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel(); // 停止先前的發音
+        const utterance = new SpeechSynthesisUtterance(word);
+        utterance.lang = 'en-US';
+        utterance.rate = 0.9;
+        window.speechSynthesis.speak(utterance);
+      }
+    }
+
+    // 卡片翻轉邏輯 + 自動朗讀
+    function toggleCard(cardElement, word) {
+      const isFlipped = cardElement.classList.toggle('flipped');
+      speakWord(word);
+    }
+  </script>
 </body>
 </html>
